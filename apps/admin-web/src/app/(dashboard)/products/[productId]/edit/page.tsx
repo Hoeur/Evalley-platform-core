@@ -26,7 +26,7 @@ export default async function EditProductPage({
     core.catalog.listBrands({ perPage: 100 }),
   ]);
   return (
-    <PageContainer className="max-w-5xl">
+    <PageContainer className="max-w-6xl">
       <PageHeader
         title="Edit product"
         description={`Update ${product.name}.`}

@@ -15,6 +15,7 @@ export const moduleRules: Record<ModuleKey, ModuleRule> = {
   categories: { dependencies: ["products"] },
   promotions: { dependencies: ["products", "customers"] },
   reviews: { dependencies: ["products"] },
+  content: { dependencies: [] },
   orders: { dependencies: [] },
   returns: { dependencies: ["orders"] },
   shipments: { dependencies: ["orders"] },

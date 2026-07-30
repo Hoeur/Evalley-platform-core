@@ -12,7 +12,13 @@ import { MobileNavigation } from "./sidebar/mobile-navigation";
 
 type HeaderGroup = {
   label: string;
-  items: { key: string; label: string; href: string }[];
+  items: {
+    key: string;
+    label: string;
+    href: string;
+    icon?: React.ReactNode;
+    badge?: string;
+  }[];
 };
 
 const descriptions: Record<string, string> = {
@@ -56,9 +62,13 @@ export function DashboardHeaderContent({
   const routeKey = active?.key ?? "dashboard";
   return (
     <header className="bg-card sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-4 md:px-7">
-      <MobileNavigation brand={client.brand.shortName} groups={groups} />
-      <div className="hidden min-w-0 sm:block">
-        <p className="font-heading text-[17px] leading-tight font-bold tracking-tight">
+      <MobileNavigation
+        brandShort={client.brand.shortName}
+        groups={groups}
+        user={{ name: user.name, role: user.role }}
+      />
+      <div className="min-w-0 flex-1 lg:flex-none">
+        <p className="font-heading truncate text-[17px] leading-tight font-bold tracking-tight">
           {title}
         </p>
         <p className="text-muted-foreground truncate text-[11px]">
@@ -76,7 +86,7 @@ export function DashboardHeaderContent({
           Ctrl K
         </kbd>
       </div>
-      <div className="flex-1" />
+      <div className="hidden flex-1 lg:block" />
       {client.modules.includes("products") && (
         <Button
           asChild

@@ -267,6 +267,12 @@ export type StockMovement = {
   readonly createdAt: string;
 };
 
+export type MovementReportQuery = PageQuery & {
+  readonly productId?: string;
+  readonly from?: string;
+  readonly to?: string;
+};
+
 export type OrderPayment = {
   readonly status: string;
   readonly method: string | null;
@@ -340,6 +346,7 @@ export interface CatalogRepository {
   updateProduct(id: string, input: Partial<SaveProductInput>): Promise<Product>;
   deleteProduct(id: string): Promise<void>;
   uploadProductImage(id: string, file: UploadAsset): Promise<Product>;
+  deleteProductImage(productId: string, mediaId: string): Promise<void>;
   listVariations(productId: string): Promise<readonly Product[]>;
   createVariations(
     productId: string,
@@ -394,6 +401,10 @@ export interface InventoryRepository {
     input: InventoryMovementInput,
   ): Promise<InventoryItem>;
   movements(productId: string, query?: PageQuery): Promise<Page<StockMovement>>;
+  reportMovements(query?: MovementReportQuery): Promise<Page<StockMovement>>;
+  reportAdjustments(query?: MovementReportQuery): Promise<Page<StockMovement>>;
+  reportLowStock(query?: PageQuery): Promise<Page<InventoryItem>>;
+  reportOutOfStock(query?: PageQuery): Promise<Page<InventoryItem>>;
 }
 
 export interface OrderRepository {
@@ -415,9 +426,132 @@ export interface ReviewRepository {
   reject(id: string): Promise<Review>;
 }
 
+export type Banner = {
+  readonly id: string;
+  readonly linkUrl: string | null;
+  readonly status: PublishStatus;
+  readonly order: number;
+  readonly imageUrls: readonly string[];
+  readonly title: string;
+  readonly subtitle: string | null;
+  readonly buttonText: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type SaveBannerInput = {
+  readonly title: string;
+  readonly subtitle?: string | null;
+  readonly buttonText?: string | null;
+  readonly linkUrl?: string | null;
+  readonly status?: PublishStatus;
+  readonly order?: number;
+};
+
+export type StaticPage = {
+  readonly id: string;
+  readonly slug: string;
+  readonly status: PublishStatus;
+  readonly title: string;
+  readonly content: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type SaveStaticPageInput = {
+  readonly title: string;
+  readonly content: string;
+  readonly slug?: string | null;
+  readonly status?: PublishStatus;
+};
+
+export type FooterLink = {
+  readonly id: string;
+  readonly group: string;
+  readonly url: string;
+  readonly order: number;
+  readonly status: PublishStatus;
+  readonly label: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type SaveFooterLinkInput = {
+  readonly group: string;
+  readonly url: string;
+  readonly label: string;
+  readonly order?: number;
+  readonly status?: PublishStatus;
+};
+
+export type FooterSocial = {
+  readonly id: string;
+  readonly platform: string;
+  readonly url: string;
+  readonly order: number;
+  readonly status: PublishStatus;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type SaveFooterSocialInput = {
+  readonly platform: string;
+  readonly url: string;
+  readonly order?: number;
+  readonly status?: PublishStatus;
+};
+
+export type FooterSettings = {
+  readonly id: string;
+  readonly phone: string | null;
+  readonly email: string | null;
+  readonly about: string | null;
+  readonly address: string | null;
+  readonly updatedAt: string;
+};
+
+export type SaveFooterSettingsInput = {
+  readonly phone?: string | null;
+  readonly email?: string | null;
+  readonly about?: string | null;
+  readonly address?: string | null;
+};
+
+export interface CmsRepository {
+  listBanners(query?: PageQuery): Promise<Page<Banner>>;
+  createBanner(input: SaveBannerInput): Promise<Banner>;
+  updateBanner(id: string, input: Partial<SaveBannerInput>): Promise<Banner>;
+  deleteBanner(id: string): Promise<void>;
+  uploadBannerImage(id: string, file: UploadAsset): Promise<Banner>;
+  listStaticPages(query?: PageQuery): Promise<Page<StaticPage>>;
+  createStaticPage(input: SaveStaticPageInput): Promise<StaticPage>;
+  updateStaticPage(
+    id: string,
+    input: Partial<SaveStaticPageInput>,
+  ): Promise<StaticPage>;
+  deleteStaticPage(id: string): Promise<void>;
+  listFooterLinks(query?: PageQuery): Promise<Page<FooterLink>>;
+  createFooterLink(input: SaveFooterLinkInput): Promise<FooterLink>;
+  updateFooterLink(
+    id: string,
+    input: Partial<SaveFooterLinkInput>,
+  ): Promise<FooterLink>;
+  deleteFooterLink(id: string): Promise<void>;
+  listFooterSocials(query?: PageQuery): Promise<Page<FooterSocial>>;
+  createFooterSocial(input: SaveFooterSocialInput): Promise<FooterSocial>;
+  updateFooterSocial(
+    id: string,
+    input: Partial<SaveFooterSocialInput>,
+  ): Promise<FooterSocial>;
+  deleteFooterSocial(id: string): Promise<void>;
+  getFooterSettings(): Promise<FooterSettings>;
+  updateFooterSettings(input: SaveFooterSettingsInput): Promise<FooterSettings>;
+}
+
 export type EcommerceCore = {
   readonly catalog: CatalogRepository;
   readonly inventory: InventoryRepository;
   readonly orders: OrderRepository;
   readonly reviews: ReviewRepository;
+  readonly cms: CmsRepository;
 };

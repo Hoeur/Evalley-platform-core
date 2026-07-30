@@ -1,8 +1,8 @@
 "use client";
 
 import type { Brand, Category } from "@platform/ecommerce-core";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
+import { Image as ImageIcon, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/page/page-container";
@@ -468,6 +468,8 @@ export function CatalogManagementWorkspace({
           (category) => category.id !== editingCategory?.id,
         )}
         pending={pending}
+        image={categoryImage}
+        currentImageUrl={editingCategory?.imageUrl}
         onImageChange={setCategoryImage}
         onSave={saveCategory}
       />
@@ -478,6 +480,8 @@ export function CatalogManagementWorkspace({
         form={brandForm}
         setForm={setBrandForm}
         pending={pending}
+        logo={brandLogo}
+        currentLogoUrl={editingBrand?.logoUrl}
         onLogoChange={setBrandLogo}
         onSave={saveBrand}
       />
@@ -493,6 +497,8 @@ function CategoryDialog({
   setForm,
   categories,
   pending,
+  image,
+  currentImageUrl,
   onImageChange,
   onSave,
 }: {
@@ -503,6 +509,8 @@ function CategoryDialog({
   setForm: React.Dispatch<React.SetStateAction<CategoryFormValues>>;
   categories: readonly Category[];
   pending: boolean;
+  image?: File;
+  currentImageUrl?: string | null;
   onImageChange: (file?: File) => void;
   onSave: () => void;
 }) {
@@ -628,13 +636,12 @@ function CategoryDialog({
               setForm((value) => ({ ...value, featured }))
             }
           />
-          <Field label="Category image">
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(event) => onImageChange(event.target.files?.[0])}
-            />
-          </Field>
+          <ImageUploadField
+            label="Category image"
+            currentUrl={currentImageUrl}
+            file={image}
+            onChange={onImageChange}
+          />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -656,6 +663,8 @@ function BrandDialog({
   form,
   setForm,
   pending,
+  logo,
+  currentLogoUrl,
   onLogoChange,
   onSave,
 }: {
@@ -665,6 +674,8 @@ function BrandDialog({
   form: BrandFormValues;
   setForm: React.Dispatch<React.SetStateAction<BrandFormValues>>;
   pending: boolean;
+  logo?: File;
+  currentLogoUrl?: string | null;
   onLogoChange: (file?: File) => void;
   onSave: () => void;
 }) {
@@ -777,13 +788,12 @@ function BrandDialog({
               setForm((value) => ({ ...value, featured }))
             }
           />
-          <Field label="Brand logo">
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(event) => onLogoChange(event.target.files?.[0])}
-            />
-          </Field>
+          <ImageUploadField
+            label="Brand logo"
+            currentUrl={currentLogoUrl}
+            file={logo}
+            onChange={onLogoChange}
+          />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -795,6 +805,52 @@ function BrandDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ImageUploadField({
+  label,
+  currentUrl,
+  file,
+  onChange,
+}: {
+  label: string;
+  currentUrl?: string | null;
+  file?: File;
+  onChange: (file?: File) => void;
+}) {
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const shown = preview ?? currentUrl ?? null;
+
+  return (
+    <Field label={label}>
+      <div className="flex items-center gap-4">
+        <div className="bg-muted flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border">
+          {shown ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={shown} alt="" className="size-full object-cover" />
+          ) : (
+            <ImageIcon className="text-muted-foreground size-5" />
+          )}
+        </div>
+        <Input
+          type="file"
+          accept="image/*"
+          onChange={(event) => onChange(event.target.files?.[0])}
+        />
+      </div>
+    </Field>
   );
 }
 

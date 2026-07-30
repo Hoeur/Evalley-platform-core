@@ -15,7 +15,13 @@ export function DashboardHeader({
 }) {
   const groups = navigation.map((group) => ({
     label: group.label,
-    items: group.items.map(({ key, label, href }) => ({ key, label, href })),
+    items: group.items.map(({ key, label, href, icon: Icon, badge }) => ({
+      key,
+      label,
+      href,
+      icon: <Icon className="size-[18px] shrink-0" />,
+      badge,
+    })),
   }));
   return <DashboardHeaderContent client={client} user={user} groups={groups} />;
 }

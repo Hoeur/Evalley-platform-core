@@ -167,3 +167,61 @@ export type LaravelReviewDto = {
   readonly created_at: string;
   readonly updated_at: string;
 };
+
+export type LaravelBannerDto = {
+  readonly id: number | string;
+  readonly link_url: string | null;
+  readonly status: string;
+  readonly order: number;
+  readonly image_urls: readonly string[];
+  readonly translations: Readonly<
+    Record<
+      string,
+      { title: string; subtitle?: string | null; button_text?: string | null }
+    >
+  >;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+export type LaravelStaticPageDto = {
+  readonly id: number | string;
+  readonly slug: string;
+  readonly status: string;
+  readonly translations: Readonly<
+    Record<string, { title: string; content: string }>
+  >;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+export type LaravelFooterLinkDto = {
+  readonly id: number | string;
+  readonly group: string;
+  readonly url: string;
+  readonly order: number;
+  readonly status: string;
+  readonly translations: Readonly<Record<string, { label: string }>>;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+export type LaravelFooterSocialDto = {
+  readonly id: number | string;
+  readonly platform: string;
+  readonly url: string;
+  readonly order: number;
+  readonly status: string;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+export type LaravelFooterSettingDto = {
+  readonly id: number | string;
+  readonly phone: string | null;
+  readonly email: string | null;
+  readonly translations: Readonly<
+    Record<string, { about?: string | null; address?: string | null }>
+  >;
+  readonly updated_at: string;
+};

@@ -11,7 +11,7 @@ export default async function NewProductPage() {
     core.catalog.listBrands({ perPage: 100 }),
   ]);
   return (
-    <PageContainer className="max-w-5xl">
+    <PageContainer className="max-w-6xl">
       <PageHeader
         title="Add product"
         description="Create a catalog item using the shared product contract."

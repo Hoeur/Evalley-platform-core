@@ -7,6 +7,7 @@ import type {
 } from "@platform/ecommerce-core";
 import { Boxes, History, Search, Settings2 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/page/page-container";
@@ -181,14 +182,19 @@ export function InventoryManagementWorkspace({
 
   return (
     <PageContainer className="max-w-[1296px] gap-4 py-5 md:px-7">
-      <div>
-        <h1 className="font-heading text-xl font-bold tracking-tight">
-          Inventory & stock
-        </h1>
-        <p className="text-muted-foreground mt-1 text-xs">
-          Configure product stock using the existing inventory settings and
-          movement API fields.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-heading text-xl font-bold tracking-tight">
+            Inventory & stock
+          </h1>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Configure product stock using the existing inventory settings and
+            movement API fields.
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/inventory/reports">View reports</Link>
+        </Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

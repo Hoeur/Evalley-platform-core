@@ -17,6 +17,8 @@ export const permissions = [
   "categories.manage",
   "reviews.read",
   "reviews.manage",
+  "content.read",
+  "content.manage",
   "orders.read",
   "orders.update",
   "returns.read",

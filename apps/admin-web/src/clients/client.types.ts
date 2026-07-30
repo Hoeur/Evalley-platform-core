@@ -12,6 +12,7 @@ export const moduleKeys = [
   "categories",
   "promotions",
   "reviews",
+  "content",
   "orders",
   "returns",
   "shipments",

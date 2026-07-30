@@ -1,3 +1,7 @@
+import {
+  evalleyDarkTheme,
+  evalleyLightTheme,
+} from "@/design-system/themes/evalley-theme";
 import { defaultClient } from "./default.client";
 import type { ClientConfig } from "./client.types";
 
@@ -5,6 +9,12 @@ export const evalleyClient: ClientConfig = {
   public: {
     ...defaultClient.public,
     key: "evalley",
+    theme: {
+      light: evalleyLightTheme,
+      dark: evalleyDarkTheme,
+      fontSans: "Geist",
+      fontHeading: "Geist",
+    },
     brand: {
       name: "Evalley Administration",
       shortName: "Evalley",
@@ -29,6 +39,7 @@ export const evalleyClient: ClientConfig = {
       "categories",
       "promotions",
       "reviews",
+      "content",
       "orders",
       "returns",
       "shipments",
@@ -51,6 +62,7 @@ export const evalleyClient: ClientConfig = {
       "categories",
       "promotions",
       "reviews",
+      "content",
       "orders",
       "returns",
       "shipments",

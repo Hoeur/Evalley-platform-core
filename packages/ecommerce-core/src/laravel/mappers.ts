@@ -1,14 +1,20 @@
 import type {
   AttributeSet,
   AttributeValue,
+  Banner,
   Brand,
   Category,
+  FooterLink,
+  FooterSettings,
+  FooterSocial,
   InventoryItem,
   InventoryMetrics,
   Order,
   Product,
+  PublishStatus,
   Refund,
   Review,
+  StaticPage,
   StockMovement,
   Translation,
   Translations,
@@ -16,14 +22,19 @@ import type {
 import type {
   LaravelAttributeSetDto,
   LaravelAttributeValueDto,
+  LaravelBannerDto,
   LaravelBrandDto,
   LaravelCategoryDto,
+  LaravelFooterLinkDto,
+  LaravelFooterSettingDto,
+  LaravelFooterSocialDto,
   LaravelInventoryItemDto,
   LaravelInventoryMetricsDto,
   LaravelOrderDto,
   LaravelProductDto,
   LaravelRefundDto,
   LaravelReviewDto,
+  LaravelStaticPageDto,
   LaravelStockMovementDto,
 } from "./dto";
 
@@ -249,6 +260,91 @@ export function mapReview(dto: LaravelReviewDto): Review {
     body: dto.body,
     status: dto.status,
     createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+function pickLocale<T>(
+  translations: Readonly<Record<string, T>> | undefined,
+  locale: string,
+): Partial<T> {
+  return (translations?.[locale] ??
+    Object.values(translations ?? {})[0] ??
+    {}) as Partial<T>;
+}
+
+export function mapBanner(dto: LaravelBannerDto, locale: string): Banner {
+  const t = pickLocale(dto.translations, locale);
+  return {
+    id: String(dto.id),
+    linkUrl: dto.link_url,
+    status: dto.status as PublishStatus,
+    order: dto.order,
+    imageUrls: dto.image_urls,
+    title: t.title ?? "",
+    subtitle: t.subtitle ?? null,
+    buttonText: t.button_text ?? null,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapStaticPage(
+  dto: LaravelStaticPageDto,
+  locale: string,
+): StaticPage {
+  const t = pickLocale(dto.translations, locale);
+  return {
+    id: String(dto.id),
+    slug: dto.slug,
+    status: dto.status as PublishStatus,
+    title: t.title ?? "",
+    content: t.content ?? "",
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapFooterLink(
+  dto: LaravelFooterLinkDto,
+  locale: string,
+): FooterLink {
+  const t = pickLocale(dto.translations, locale);
+  return {
+    id: String(dto.id),
+    group: dto.group,
+    url: dto.url,
+    order: dto.order,
+    status: dto.status as PublishStatus,
+    label: t.label ?? "",
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapFooterSocial(dto: LaravelFooterSocialDto): FooterSocial {
+  return {
+    id: String(dto.id),
+    platform: dto.platform,
+    url: dto.url,
+    order: dto.order,
+    status: dto.status as PublishStatus,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapFooterSettings(
+  dto: LaravelFooterSettingDto,
+  locale: string,
+): FooterSettings {
+  const t = pickLocale(dto.translations, locale);
+  return {
+    id: String(dto.id),
+    phone: dto.phone,
+    email: dto.email,
+    about: t.about ?? null,
+    address: t.address ?? null,
     updatedAt: dto.updated_at,
   };
 }

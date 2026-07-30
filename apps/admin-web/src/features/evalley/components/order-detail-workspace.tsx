@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import type { Order } from "@platform/ecommerce-core";
+import type { Order, Refund } from "@platform/ecommerce-core";
 import { PageContainer } from "@/components/page/page-container";
 import { StatusBadge } from "@/components/status/status-badge";
 import { Button } from "@/design-system/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/design-system/ui/card";
+import { OrderRefundsPanel } from "./order-refunds-panel";
 import {
   Table,
   TableBody,
@@ -25,7 +26,15 @@ function statusVariant(status: string) {
   return "warning" as const;
 }
 
-export function OrderDetailWorkspace({ order }: { order: Order }) {
+export function OrderDetailWorkspace({
+  order,
+  refunds,
+  canManageRefunds,
+}: {
+  order: Order;
+  refunds: readonly Refund[];
+  canManageRefunds: boolean;
+}) {
   return (
     <PageContainer className="max-w-[1100px] gap-4 py-5 md:px-7">
       <div className="flex items-center gap-3">
@@ -121,6 +130,12 @@ export function OrderDetailWorkspace({ order }: { order: Order }) {
               </div>
             </CardContent>
           </Card>
+          <OrderRefundsPanel
+            orderId={order.id}
+            refunds={refunds}
+            maxAmount={order.total}
+            canManage={canManageRefunds}
+          />
         </div>
       </div>
     </PageContainer>

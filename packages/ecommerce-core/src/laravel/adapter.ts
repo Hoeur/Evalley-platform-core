@@ -3,42 +3,58 @@ import type {
   InventoryMovementInput,
   InventoryQuery,
   InventorySettingsInput,
+  MovementReportQuery,
   OrderQuery,
   PageQuery,
   ProductQuery,
   ReviewQuery,
   SaveAttributeSetInput,
   SaveAttributeValueInput,
+  SaveBannerInput,
   SaveBrandInput,
   SaveCategoryInput,
+  SaveFooterLinkInput,
+  SaveFooterSettingsInput,
+  SaveFooterSocialInput,
   SaveProductInput,
+  SaveStaticPageInput,
   SaveVariationInput,
   UploadAsset,
 } from "../contracts";
 import type {
   LaravelAttributeSetDto,
   LaravelAttributeValueDto,
+  LaravelBannerDto,
   LaravelBrandDto,
   LaravelCategoryDto,
+  LaravelFooterLinkDto,
+  LaravelFooterSettingDto,
+  LaravelFooterSocialDto,
   LaravelInventoryItemDto,
   LaravelInventoryMetricsDto,
   LaravelOrderDto,
   LaravelProductDto,
   LaravelRefundDto,
   LaravelReviewDto,
+  LaravelStaticPageDto,
   LaravelStockMovementDto,
 } from "./dto";
 import {
   mapAttributeSet,
   mapAttributeValue,
+  mapBanner,
   mapBrand,
   mapCategory,
+  mapFooterLink,
+  mapFooterSettings,
+  mapFooterSocial,
   mapInventoryItem,
   mapInventoryMetrics,
   mapOrder,
   mapProduct,
   mapRefund,
   mapReview,
+  mapStaticPage,
   mapStockMovement,
 } from "./mappers";
 import {
@@ -55,6 +71,85 @@ type LaravelAdapterOptions = {
 
 function pageQuery(query?: PageQuery) {
   return { page: query?.page, per_page: query?.perPage };
+}
+
+function movementReportQuery(query?: MovementReportQuery) {
+  return {
+    ...pageQuery(query),
+    product_id: query?.productId,
+    from: query?.from,
+    to: query?.to,
+  };
+}
+
+function bannerBody(input: Partial<SaveBannerInput>, locale: string) {
+  return {
+    link_url: input.linkUrl,
+    status: input.status,
+    order: input.order,
+    translations:
+      input.title === undefined
+        ? undefined
+        : {
+            [locale]: {
+              title: input.title,
+              subtitle: input.subtitle ?? null,
+              button_text: input.buttonText ?? null,
+            },
+          },
+  };
+}
+
+function staticPageBody(input: Partial<SaveStaticPageInput>, locale: string) {
+  return {
+    slug: input.slug,
+    status: input.status,
+    translations:
+      input.title === undefined && input.content === undefined
+        ? undefined
+        : { [locale]: { title: input.title, content: input.content } },
+  };
+}
+
+function footerLinkBody(input: Partial<SaveFooterLinkInput>, locale: string) {
+  return {
+    group: input.group,
+    url: input.url,
+    order: input.order,
+    status: input.status,
+    translations:
+      input.label === undefined
+        ? undefined
+        : { [locale]: { label: input.label } },
+  };
+}
+
+function footerSocialBody(input: Partial<SaveFooterSocialInput>) {
+  return {
+    platform: input.platform,
+    url: input.url,
+    order: input.order,
+    status: input.status,
+  };
+}
+
+function footerSettingsBody(
+  input: Partial<SaveFooterSettingsInput>,
+  locale: string,
+) {
+  return {
+    phone: input.phone,
+    email: input.email,
+    translations:
+      input.about === undefined && input.address === undefined
+        ? undefined
+        : {
+            [locale]: {
+              about: input.about ?? null,
+              address: input.address ?? null,
+            },
+          },
+  };
 }
 
 function productQuery(query?: ProductQuery) {
@@ -319,6 +414,12 @@ export function createLaravelEcommerceCore({
         });
         return mapProduct(unwrapItem(envelope), locale);
       },
+      async deleteProductImage(productId, mediaId) {
+        await transport({
+          method: "DELETE",
+          path: `/catalog/products/${productId}/images/${mediaId}`,
+        });
+      },
       async listVariations(productId) {
         const envelope = await transport<LaravelEnvelope<LaravelProductDto>>({
           method: "GET",
@@ -578,6 +679,50 @@ export function createLaravelEcommerceCore({
         const page = unwrapItems(envelope);
         return { ...page, items: page.items.map(mapStockMovement) };
       },
+      async reportMovements(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelStockMovementDto>
+        >({
+          method: "GET",
+          path: "/inventory/reports/movements",
+          query: movementReportQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapStockMovement) };
+      },
+      async reportAdjustments(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelStockMovementDto>
+        >({
+          method: "GET",
+          path: "/inventory/reports/adjustments",
+          query: movementReportQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapStockMovement) };
+      },
+      async reportLowStock(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelInventoryItemDto>
+        >({
+          method: "GET",
+          path: "/inventory/reports/low-stock",
+          query: pageQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapInventoryItem) };
+      },
+      async reportOutOfStock(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelInventoryItemDto>
+        >({
+          method: "GET",
+          path: "/inventory/reports/out-of-stock",
+          query: pageQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapInventoryItem) };
+      },
     },
     orders: {
       async list(query) {
@@ -650,6 +795,162 @@ export function createLaravelEcommerceCore({
           path: `/reviews/${id}/reject`,
         });
         return mapReview(unwrapItem(envelope));
+      },
+    },
+    cms: {
+      async listBanners(query) {
+        const envelope = await transport<LaravelEnvelope<LaravelBannerDto>>({
+          method: "GET",
+          path: "/cms/banners",
+          query: pageQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return {
+          ...page,
+          items: page.items.map((item) => mapBanner(item, locale)),
+        };
+      },
+      async createBanner(input) {
+        const envelope = await transport<LaravelEnvelope<LaravelBannerDto>>({
+          method: "POST",
+          path: "/cms/banners",
+          body: bannerBody(input, locale),
+        });
+        return mapBanner(unwrapItem(envelope), locale);
+      },
+      async updateBanner(id, input) {
+        const envelope = await transport<LaravelEnvelope<LaravelBannerDto>>({
+          method: "PUT",
+          path: `/cms/banners/${id}`,
+          body: bannerBody(input, locale),
+        });
+        return mapBanner(unwrapItem(envelope), locale);
+      },
+      async deleteBanner(id) {
+        await transport({ method: "DELETE", path: `/cms/banners/${id}` });
+      },
+      async uploadBannerImage(id, file) {
+        const envelope = await transport<LaravelEnvelope<LaravelBannerDto>>({
+          method: "POST",
+          path: `/cms/banners/${id}/image`,
+          body: uploadBody("image", file),
+        });
+        return mapBanner(unwrapItem(envelope), locale);
+      },
+      async listStaticPages(query) {
+        const envelope = await transport<LaravelEnvelope<LaravelStaticPageDto>>({
+          method: "GET",
+          path: "/cms/static-pages",
+          query: pageQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return {
+          ...page,
+          items: page.items.map((item) => mapStaticPage(item, locale)),
+        };
+      },
+      async createStaticPage(input) {
+        const envelope = await transport<LaravelEnvelope<LaravelStaticPageDto>>({
+          method: "POST",
+          path: "/cms/static-pages",
+          body: staticPageBody(input, locale),
+        });
+        return mapStaticPage(unwrapItem(envelope), locale);
+      },
+      async updateStaticPage(id, input) {
+        const envelope = await transport<LaravelEnvelope<LaravelStaticPageDto>>({
+          method: "PUT",
+          path: `/cms/static-pages/${id}`,
+          body: staticPageBody(input, locale),
+        });
+        return mapStaticPage(unwrapItem(envelope), locale);
+      },
+      async deleteStaticPage(id) {
+        await transport({ method: "DELETE", path: `/cms/static-pages/${id}` });
+      },
+      async listFooterLinks(query) {
+        const envelope = await transport<LaravelEnvelope<LaravelFooterLinkDto>>({
+          method: "GET",
+          path: "/cms/footer-links",
+          query: pageQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return {
+          ...page,
+          items: page.items.map((item) => mapFooterLink(item, locale)),
+        };
+      },
+      async createFooterLink(input) {
+        const envelope = await transport<LaravelEnvelope<LaravelFooterLinkDto>>({
+          method: "POST",
+          path: "/cms/footer-links",
+          body: footerLinkBody(input, locale),
+        });
+        return mapFooterLink(unwrapItem(envelope), locale);
+      },
+      async updateFooterLink(id, input) {
+        const envelope = await transport<LaravelEnvelope<LaravelFooterLinkDto>>({
+          method: "PUT",
+          path: `/cms/footer-links/${id}`,
+          body: footerLinkBody(input, locale),
+        });
+        return mapFooterLink(unwrapItem(envelope), locale);
+      },
+      async deleteFooterLink(id) {
+        await transport({ method: "DELETE", path: `/cms/footer-links/${id}` });
+      },
+      async listFooterSocials(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelFooterSocialDto>
+        >({
+          method: "GET",
+          path: "/cms/footer-socials",
+          query: pageQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapFooterSocial) };
+      },
+      async createFooterSocial(input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelFooterSocialDto>
+        >({
+          method: "POST",
+          path: "/cms/footer-socials",
+          body: footerSocialBody(input),
+        });
+        return mapFooterSocial(unwrapItem(envelope));
+      },
+      async updateFooterSocial(id, input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelFooterSocialDto>
+        >({
+          method: "PUT",
+          path: `/cms/footer-socials/${id}`,
+          body: footerSocialBody(input),
+        });
+        return mapFooterSocial(unwrapItem(envelope));
+      },
+      async deleteFooterSocial(id) {
+        await transport({ method: "DELETE", path: `/cms/footer-socials/${id}` });
+      },
+      async getFooterSettings() {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelFooterSettingDto>
+        >({
+          method: "GET",
+          path: "/cms/footer-settings",
+        });
+        return mapFooterSettings(unwrapItem(envelope), locale);
+      },
+      async updateFooterSettings(input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelFooterSettingDto>
+        >({
+          method: "PUT",
+          path: "/cms/footer-settings",
+          body: footerSettingsBody(input, locale),
+        });
+        return mapFooterSettings(unwrapItem(envelope), locale);
       },
     },
   };

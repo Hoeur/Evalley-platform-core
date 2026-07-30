@@ -5,7 +5,18 @@ import type {
   Product,
   PublishStatus,
 } from "@platform/ecommerce-core";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import {
+  Boxes,
+  DollarSign,
+  Eye,
+  Package,
+  Pencil,
+  Plus,
+  Search,
+  Store,
+  Tag,
+  Trash2,
+} from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -39,7 +50,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/design-system/ui/table";
-import { Textarea } from "@/design-system/ui/textarea";
 import {
   createVariantAction,
   deleteVariantAction,
@@ -73,27 +83,63 @@ const emptyVariant: VariantDetailsValues = {
 
 function Field({
   label,
+  required,
   children,
 }: {
   label: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
+      <Label>
+        {label}
+        {required && <span className="text-destructive"> *</span>}
+      </Label>
       {children}
     </div>
   );
 }
 
-function combination(variant: Product) {
-  const labels = variant.attributes
+function Section({
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="space-y-0.5">
+        <div className="flex items-center gap-2">
+          <Icon className="text-muted-foreground size-4" />
+          <h3 className="text-sm font-semibold">{title}</h3>
+        </div>
+        {description && (
+          <p className="text-muted-foreground text-xs">{description}</p>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function attributeLabels(variant: Product) {
+  return variant.attributes
     .map((attribute) =>
       attribute.value
         ? `${attribute.attribute}: ${attribute.value}`
         : attribute.attribute,
     )
     .filter(Boolean);
+}
+
+function combination(variant: Product) {
+  const labels = attributeLabels(variant);
   return labels.length ? labels.join(" · ") : "No attribute details";
 }
 
@@ -132,6 +178,19 @@ export function VariantManagementWorkspace({
   const usableAttributeSets = attributeSets.filter(
     (set) => set.values.length > 0,
   );
+
+  const selectedChips = usableAttributeSets
+    .filter((set) => selectedValues[set.id])
+    .map((set) => ({
+      setName: set.name,
+      valueName:
+        set.values.find((value) => value.id === selectedValues[set.id])?.name ??
+        "",
+    }));
+
+  const priceValid = Number.isFinite(form.price) && form.price >= 0;
+  const hasCombination =
+    Boolean(editing) || Object.keys(selectedValues).length > 0;
 
   function selectParent(productId: string) {
     router.push(`/variants?productId=${productId}`);
@@ -185,7 +244,8 @@ export function VariantManagementWorkspace({
   }
 
   function removeVariant(variant: Product) {
-    if (!parent || !window.confirm(`Delete variant "${variant.name}"?`)) return;
+    const label = variant.name || attributeLabels(variant).join(" / ");
+    if (!parent || !window.confirm(`Delete variant "${label}"?`)) return;
     startTransition(async () => {
       const result = await deleteVariantAction(parent.id, variant.id);
       if (!result.ok) {
@@ -216,31 +276,33 @@ export function VariantManagementWorkspace({
         )}
       </div>
 
-      <div className="grid gap-3 md:grid-cols-[minmax(240px,360px)_1fr]">
-        <Field label="Parent product">
-          <Select value={parent?.id} onValueChange={selectParent}>
-            <SelectTrigger>
-              <SelectValue placeholder="Choose a product" />
-            </SelectTrigger>
-            <SelectContent>
-              {products.map((product) => (
-                <SelectItem key={product.id} value={product.id}>
-                  {product.name} {product.sku ? `(${product.sku})` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <div className="relative self-end">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search variant, SKU, or option"
-            className="pl-9"
-          />
-        </div>
-      </div>
+      <Card className="rounded-2xl shadow-none">
+        <CardContent className="grid gap-3 p-4 md:grid-cols-[minmax(240px,360px)_1fr] md:items-end">
+          <Field label="Parent product">
+            <Select value={parent?.id} onValueChange={selectParent}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a product" />
+              </SelectTrigger>
+              <SelectContent>
+                {products.map((product) => (
+                  <SelectItem key={product.id} value={product.id}>
+                    {product.name} {product.sku ? `(${product.sku})` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <div className="relative">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search variant, SKU, or option"
+              className="pl-9"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {usableAttributeSets.length === 0 && (
         <Card className="border-warning/40 bg-warning/5 rounded-2xl shadow-none">
@@ -252,13 +314,20 @@ export function VariantManagementWorkspace({
       )}
 
       <Card className="overflow-hidden rounded-2xl shadow-none">
-        <div className="border-b p-4">
-          <p className="font-semibold">
-            {parent?.name ?? "No product selected"}
-          </p>
-          <p className="text-muted-foreground text-xs">
-            {variants.length} variants returned by the catalog API.
-          </p>
+        <div className="flex items-center gap-3 border-b p-4">
+          <div className="bg-muted grid size-9 place-items-center rounded-lg">
+            <Store className="text-muted-foreground size-4" />
+          </div>
+          <div>
+            <p className="font-semibold">
+              {parent?.name ?? "No product selected"}
+            </p>
+            <p className="text-muted-foreground text-xs">
+              {variants.length}{" "}
+              {variants.length === 1 ? "variant" : "variants"} from the catalog
+              API.
+            </p>
+          </div>
         </div>
         <Table>
           <TableHeader>
@@ -272,59 +341,102 @@ export function VariantManagementWorkspace({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {visibleVariants.map((variant) => (
-              <TableRow key={variant.id}>
-                <TableCell className="font-medium">{variant.name}</TableCell>
-                <TableCell>{combination(variant)}</TableCell>
-                <TableCell className="font-mono text-xs">
-                  {variant.sku || "—"}
-                </TableCell>
-                <TableCell className="text-right">
-                  {currency.format(variant.salePrice ?? variant.price)}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      variant.status === "published" ? "default" : "secondary"
-                    }
-                  >
-                    {variant.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  {canManage && (
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Edit ${variant.name}`}
-                        onClick={() => openVariant(variant)}
-                      >
-                        <Pencil />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Delete ${variant.name}`}
-                        disabled={pending}
-                        onClick={() => removeVariant(variant)}
-                      >
-                        <Trash2 />
-                      </Button>
+            {visibleVariants.map((variant) => {
+              const labels = attributeLabels(variant);
+              return (
+                <TableRow key={variant.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {variant.name || "Untitled variant"}
+                      {variant.featured && (
+                        <Badge variant="outline" className="font-normal">
+                          Featured
+                        </Badge>
+                      )}
                     </div>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {labels.length ? (
+                        labels.map((label) => (
+                          <Badge
+                            key={label}
+                            variant="outline"
+                            className="font-normal"
+                          >
+                            {label}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {variant.sku || "—"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {variant.salePrice != null ? (
+                      <span>
+                        <span className="font-medium">
+                          {currency.format(variant.salePrice)}
+                        </span>
+                        <span className="text-muted-foreground ml-1 text-xs line-through">
+                          {currency.format(variant.price)}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="font-medium">
+                        {currency.format(variant.price)}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        variant.status === "published" ? "default" : "secondary"
+                      }
+                    >
+                      {variant.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {canManage && (
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Edit ${variant.name}`}
+                          onClick={() => openVariant(variant)}
+                        >
+                          <Pencil />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Delete ${variant.name}`}
+                          disabled={pending}
+                          onClick={() => removeVariant(variant)}
+                        >
+                          <Trash2 />
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {visibleVariants.length === 0 && (
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-muted-foreground h-28 text-center"
-                >
-                  {parent
-                    ? "No variants configured for this product."
-                    : "No catalog product is available."}
+                <TableCell colSpan={6} className="h-28 text-center">
+                  <div className="text-muted-foreground flex flex-col items-center gap-2">
+                    <Boxes className="size-6" />
+                    <span className="text-sm">
+                      {parent
+                        ? "No variants configured for this product."
+                        : "Select a parent product to manage its variants."}
+                    </span>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -333,7 +445,7 @@ export function VariantManagementWorkspace({
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {editing ? "Edit variant" : "Add variant"}
@@ -345,219 +457,227 @@ export function VariantManagementWorkspace({
             </DialogDescription>
           </DialogHeader>
 
-          {!editing && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {usableAttributeSets.map((set) => (
-                <Field key={set.id} label={set.name}>
+          <div className="space-y-6">
+            {editing ? (
+              <Section
+                icon={Boxes}
+                title="Combination"
+                description="The attribute combination is fixed after creation."
+              >
+                <div className="flex flex-wrap gap-1">
+                  {attributeLabels(editing).length ? (
+                    attributeLabels(editing).map((label) => (
+                      <Badge key={label} variant="secondary">
+                        {label}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground text-sm">
+                      No attribute details
+                    </span>
+                  )}
+                </div>
+              </Section>
+            ) : (
+              <Section
+                icon={Boxes}
+                title="Attributes"
+                description="Pick one value from each set that applies — at least one is required."
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {usableAttributeSets.map((set) => (
+                    <Field key={set.id} label={set.name}>
+                      <Select
+                        value={selectedValues[set.id] ?? "__none__"}
+                        onValueChange={(value) =>
+                          setSelectedValues((current) => {
+                            const next = { ...current };
+                            if (value === "__none__") delete next[set.id];
+                            else next[set.id] = value;
+                            return next;
+                          })
+                        }
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Not used</SelectItem>
+                          {set.values.map((value) => (
+                            <SelectItem key={value.id} value={value.id}>
+                              {value.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  ))}
+                </div>
+                {selectedChips.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="text-muted-foreground text-xs">
+                      Combination:
+                    </span>
+                    {selectedChips.map((chip) => (
+                      <Badge key={chip.setName} variant="secondary">
+                        {chip.setName}: {chip.valueName}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </Section>
+            )}
+
+            <Section icon={Tag} title="Identity">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="SKU">
+                  <Input
+                    value={form.sku}
+                    onChange={(event) =>
+                      setForm((value) => ({
+                        ...value,
+                        sku: event.target.value,
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label="Barcode">
+                  <Input
+                    value={form.barcode}
+                    onChange={(event) =>
+                      setForm((value) => ({
+                        ...value,
+                        barcode: event.target.value,
+                      }))
+                    }
+                  />
+                </Field>
+              </div>
+            </Section>
+
+            <Section icon={DollarSign} title="Pricing & sale">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Price" required>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.price}
+                    onChange={(event) =>
+                      setForm((value) => ({
+                        ...value,
+                        price: Number(event.target.value),
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label="Sale price">
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.salePrice ?? ""}
+                    onChange={(event) =>
+                      setForm((value) => ({
+                        ...value,
+                        salePrice:
+                          event.target.value === ""
+                            ? null
+                            : Number(event.target.value),
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label="Sale starts">
+                  <Input
+                    type="datetime-local"
+                    value={form.saleStartsAt ?? ""}
+                    onChange={(event) =>
+                      setForm((value) => ({
+                        ...value,
+                        saleStartsAt: event.target.value || null,
+                      }))
+                    }
+                  />
+                </Field>
+                <Field label="Sale ends">
+                  <Input
+                    type="datetime-local"
+                    value={form.saleEndsAt ?? ""}
+                    onChange={(event) =>
+                      setForm((value) => ({
+                        ...value,
+                        saleEndsAt: event.target.value || null,
+                      }))
+                    }
+                  />
+                </Field>
+              </div>
+            </Section>
+
+            <Section icon={Package} title="Shipping measurements">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {(["weight", "length", "width", "height"] as const).map(
+                  (name) => (
+                    <Field
+                      key={name}
+                      label={name[0].toUpperCase() + name.slice(1)}
+                    >
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={form[name] ?? ""}
+                        onChange={(event) =>
+                          setForm((value) => ({
+                            ...value,
+                            [name]:
+                              event.target.value === ""
+                                ? null
+                                : Number(event.target.value),
+                          }))
+                        }
+                      />
+                    </Field>
+                  ),
+                )}
+              </div>
+            </Section>
+
+            <Section icon={Eye} title="Publishing">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Status">
                   <Select
-                    value={selectedValues[set.id] ?? "__none__"}
-                    onValueChange={(value) =>
-                      setSelectedValues((current) => {
-                        const next = { ...current };
-                        if (value === "__none__") delete next[set.id];
-                        else next[set.id] = value;
-                        return next;
-                      })
+                    value={form.status}
+                    onValueChange={(status: PublishStatus) =>
+                      setForm((value) => ({ ...value, status }))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">Not used</SelectItem>
-                      {set.values.map((value) => (
-                        <SelectItem key={value.id} value={value.id}>
-                          {value.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
-              ))}
-            </div>
-          )}
-
-          {editing && (
-            <div className="bg-muted/30 rounded-lg border p-3 text-sm">
-              <span className="font-medium">Options:</span>{" "}
-              {combination(editing)}
-            </div>
-          )}
-
-          <div className="grid gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="English name (optional)">
-                <Input
-                  value={form.name}
-                  onChange={(event) =>
-                    setForm((value) => ({ ...value, name: event.target.value }))
-                  }
-                />
-              </Field>
-              <Field label="Khmer name">
-                <Input
-                  value={form.nameKm}
-                  onChange={(event) =>
-                    setForm((value) => ({
-                      ...value,
-                      nameKm: event.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="English description">
-                <Textarea
-                  value={form.description}
-                  onChange={(event) =>
-                    setForm((value) => ({
-                      ...value,
-                      description: event.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Khmer description">
-                <Textarea
-                  value={form.descriptionKm}
-                  onChange={(event) =>
-                    setForm((value) => ({
-                      ...value,
-                      descriptionKm: event.target.value,
-                    }))
-                  }
-                />
-              </Field>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="SKU">
-                <Input
-                  value={form.sku}
-                  onChange={(event) =>
-                    setForm((value) => ({ ...value, sku: event.target.value }))
-                  }
-                />
-              </Field>
-              <Field label="Barcode">
-                <Input
-                  value={form.barcode}
-                  onChange={(event) =>
-                    setForm((value) => ({
-                      ...value,
-                      barcode: event.target.value,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Price">
-                <Input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={form.price}
-                  onChange={(event) =>
-                    setForm((value) => ({
-                      ...value,
-                      price: Number(event.target.value),
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Sale price">
-                <Input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={form.salePrice ?? ""}
-                  onChange={(event) =>
-                    setForm((value) => ({
-                      ...value,
-                      salePrice:
-                        event.target.value === ""
-                          ? null
-                          : Number(event.target.value),
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Sale starts">
-                <Input
-                  type="datetime-local"
-                  value={form.saleStartsAt ?? ""}
-                  onChange={(event) =>
-                    setForm((value) => ({
-                      ...value,
-                      saleStartsAt: event.target.value || null,
-                    }))
-                  }
-                />
-              </Field>
-              <Field label="Sale ends">
-                <Input
-                  type="datetime-local"
-                  value={form.saleEndsAt ?? ""}
-                  onChange={(event) =>
-                    setForm((value) => ({
-                      ...value,
-                      saleEndsAt: event.target.value || null,
-                    }))
-                  }
-                />
-              </Field>
-              {(["weight", "length", "width", "height"] as const).map(
-                (name) => (
-                  <Field
-                    key={name}
-                    label={name[0].toUpperCase() + name.slice(1)}
-                  >
-                    <Input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={form[name] ?? ""}
-                      onChange={(event) =>
-                        setForm((value) => ({
-                          ...value,
-                          [name]:
-                            event.target.value === ""
-                              ? null
-                              : Number(event.target.value),
-                        }))
-                      }
-                    />
-                  </Field>
-                ),
-              )}
-              <Field label="Status">
-                <Select
-                  value={form.status}
-                  onValueChange={(status: PublishStatus) =>
-                    setForm((value) => ({ ...value, status }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <Label>Featured</Label>
-                  <p className="text-muted-foreground text-xs">
-                    Maps to is_featured.
-                  </p>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <Label>Featured</Label>
+                    <p className="text-muted-foreground text-xs">
+                      Maps to is_featured.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={form.featured}
+                    onCheckedChange={(featured) =>
+                      setForm((value) => ({ ...value, featured }))
+                    }
+                  />
                 </div>
-                <Switch
-                  checked={form.featured}
-                  onCheckedChange={(featured) =>
-                    setForm((value) => ({ ...value, featured }))
-                  }
-                />
               </div>
-            </div>
+            </Section>
           </div>
 
           <DialogFooter>
@@ -565,10 +685,7 @@ export function VariantManagementWorkspace({
               Cancel
             </Button>
             <Button
-              disabled={
-                pending ||
-                (!editing && Object.keys(selectedValues).length === 0)
-              }
+              disabled={pending || !hasCombination || !priceValid}
               onClick={saveVariant}
             >
               {pending
