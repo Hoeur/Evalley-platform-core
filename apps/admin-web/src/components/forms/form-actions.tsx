@@ -1,0 +1,1 @@
+export function FormActions({ children }: { children: React.ReactNode }) { return <div className="sticky bottom-0 flex items-center justify-end gap-2 rounded-xl border bg-background/95 p-4 shadow-sm backdrop-blur">{children}</div>; }

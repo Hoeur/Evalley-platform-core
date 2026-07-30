@@ -1,0 +1,2 @@
+import { Skeleton } from "@/design-system/ui/skeleton";
+export function DataTableSkeleton({ rows = 8 }: { rows?: number }) { return <div className="overflow-hidden rounded-xl border"><div className="border-b p-4"><Skeleton className="h-8 w-72" /></div>{Array.from({ length: rows }, (_, index) => <div key={index} className="flex gap-4 border-b p-4 last:border-b-0"><Skeleton className="h-5 w-5" /><Skeleton className="h-5 flex-1" /><Skeleton className="h-5 w-24" /></div>)}</div>; }

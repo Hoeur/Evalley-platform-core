@@ -1,0 +1,19 @@
+{
+  "name": "@platform/platform-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Host runtime: configuration, event bus, tenant resolution and the module host.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@platform/plugin-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

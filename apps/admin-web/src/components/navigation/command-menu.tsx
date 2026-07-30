@@ -1,0 +1,8 @@
+"use client";
+import { useEffect } from "react";
+import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/design-system/ui/button";
+import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/design-system/ui/command";
+import { usePreferencesStore } from "@/stores/preferences-store";
+export function CommandMenu({ groups }: { groups: { label: string; items: { key: string; label: string; href: string }[] }[] }) { const router = useRouter(); const open = usePreferencesStore((state) => state.commandOpen); const setOpen = usePreferencesStore((state) => state.setCommandOpen); useEffect(() => { const listener = (event: KeyboardEvent) => { if ((event.metaKey || event.ctrlKey) && event.key === "k") { event.preventDefault(); setOpen(!open); } }; window.addEventListener("keydown", listener); return () => window.removeEventListener("keydown", listener); }, [open, setOpen]); const select = (href: string) => { setOpen(false); router.push(href); }; return <><Button variant="outline" className="hidden w-52 justify-between text-muted-foreground lg:flex" onClick={() => setOpen(true)}><span className="flex items-center gap-2"><Search />Search</span><kbd className="text-xs">Ctrl K</kbd></Button><CommandDialog open={open} onOpenChange={setOpen}><CommandInput placeholder="Search modules..." /><CommandList><CommandEmpty>No module found.</CommandEmpty>{groups.map((group) => <CommandGroup key={group.label} heading={group.label}>{group.items.map((item) => <CommandItem key={item.key} onSelect={() => select(item.href)}>{item.label}</CommandItem>)}</CommandGroup>)}</CommandList></CommandDialog></>; }

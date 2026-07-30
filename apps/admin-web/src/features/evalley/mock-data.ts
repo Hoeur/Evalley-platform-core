@@ -1,0 +1,167 @@
+import type { WorkspaceConfig, WorkspaceRow } from "./types";
+
+export const evalleyOrders: WorkspaceRow[] = [
+  { id: "MF-24815", order: "#MF-24815", customer: "Emma Rodriguez", payment: "Paid", status: "Completed", total: "$149.00", date: "Jun 22, 2026", items: 3 },
+  { id: "MF-24814", order: "#MF-24814", customer: "Liam Chen", payment: "Pending", status: "Processing", total: "$89.50", date: "Jun 22, 2026", items: 1 },
+  { id: "MF-24813", order: "#MF-24813", customer: "Olivia Martins", payment: "Paid", status: "Shipped", total: "$312.20", date: "Jun 21, 2026", items: 5 },
+  { id: "MF-24812", order: "#MF-24812", customer: "Noah Williams", payment: "Failed", status: "Canceled", total: "$54.00", date: "Jun 21, 2026", items: 2 },
+  { id: "MF-24811", order: "#MF-24811", customer: "Ava Petrov", payment: "Paid", status: "Completed", total: "$228.75", date: "Jun 20, 2026", items: 4 },
+  { id: "MF-24810", order: "#MF-24810", customer: "Mason Cole", payment: "Paid", status: "Processing", total: "$167.30", date: "Jun 20, 2026", items: 2 },
+];
+
+export const evalleyCustomers: WorkspaceRow[] = [
+  { id: "emma-rodriguez", customer: "Emma Rodriguez", email: "emma.r@gmail.com", orders: 24, spent: "$3,410", status: "VIP", city: "Phnom Penh" },
+  { id: "liam-chen", customer: "Liam Chen", email: "liam.chen@outlook.com", orders: 8, spent: "$920", status: "Regular", city: "Battambang" },
+  { id: "olivia-martins", customer: "Olivia Martins", email: "o.martins@gmail.com", orders: 41, spent: "$7,120", status: "VIP", city: "Siem Reap" },
+  { id: "noah-williams", customer: "Noah Williams", email: "noahw@yahoo.com", orders: 3, spent: "$210", status: "New", city: "Kandal" },
+  { id: "ava-petrov", customer: "Ava Petrov", email: "ava.petrov@gmail.com", orders: 17, spent: "$2,240", status: "Regular", city: "Phnom Penh" },
+  { id: "mason-cole", customer: "Mason Cole", email: "mason.cole@icloud.com", orders: 12, spent: "$1,530", status: "Regular", city: "Kampot" },
+];
+
+export const workspaceConfigs = {
+  variants: {
+    title: "Variant matrix",
+    description: "Nike Air Zoom Pegasus 41 — per-variation SKU, price and stock.",
+    primaryAction: "Add variant",
+    searchPlaceholder: "Search combinations or SKU...",
+    metrics: [{ label: "Total variants", value: "6" }, { label: "Available stock", value: "110" }, { label: "Low stock", value: "1", change: "Needs attention" }, { label: "Out of stock", value: "1" }],
+    columns: [{ key: "combination", label: "Combination" }, { key: "sku", label: "SKU", format: "mono" }, { key: "price", label: "Price", align: "right" }, { key: "stock", label: "Stock", align: "right", format: "number" }, { key: "status", label: "Status", format: "status" }],
+    rows: [
+      { id: "v1", combination: "Black / 40", sku: "SKU-NIK-P41-BK40", price: "$129.99", stock: 42, status: "In stock" },
+      { id: "v2", combination: "Black / 42", sku: "SKU-NIK-P41-BK42", price: "$129.99", stock: 18, status: "In stock" },
+      { id: "v3", combination: "Black / 44", sku: "SKU-NIK-P41-BK44", price: "$129.99", stock: 7, status: "Low stock" },
+      { id: "v4", combination: "White / 40", sku: "SKU-NIK-P41-WH40", price: "$134.99", stock: 31, status: "In stock" },
+      { id: "v5", combination: "White / 42", sku: "SKU-NIK-P41-WH42", price: "$134.99", stock: 0, status: "Out of stock" },
+      { id: "v6", combination: "White / 44", sku: "SKU-NIK-P41-WH44", price: "$134.99", stock: 12, status: "In stock" },
+    ],
+  },
+  inventory: {
+    title: "Inventory",
+    description: "Stock levels and reservations across two warehouses.",
+    primaryAction: "Stock adjustment",
+    searchPlaceholder: "Search product, SKU or warehouse...",
+    metrics: [{ label: "Catalog units", value: "540" }, { label: "Reserved", value: "18" }, { label: "Available", value: "522" }, { label: "Reorder alerts", value: "3", change: "Action required" }],
+    columns: [{ key: "product", label: "Product" }, { key: "sku", label: "SKU", format: "mono" }, { key: "warehouse", label: "Warehouse" }, { key: "onHand", label: "On hand", align: "right" }, { key: "reserved", label: "Reserved", align: "right" }, { key: "available", label: "Available", align: "right" }, { key: "status", label: "Status", format: "status" }],
+    rows: [
+      { id: "i1", product: "Sony WH-1000XM5 Headphones", sku: "SKU-SNY-1000", warehouse: "Siem Reap Hub", onHand: 142, reserved: 3, available: 139, status: "In stock" },
+      { id: "i2", product: "Apple Watch Series 9 GPS", sku: "SKU-APL-W9", warehouse: "Phnom Penh DC", onHand: 58, reserved: 2, available: 56, status: "In stock" },
+      { id: "i3", product: "Herschel Little America Backpack", sku: "SKU-HRS-LA", warehouse: "Siem Reap Hub", onHand: 0, reserved: 0, available: 0, status: "Out of stock" },
+      { id: "i4", product: "Canon EOS R6 Mark II", sku: "SKU-CAN-R6", warehouse: "Phnom Penh DC", onHand: 3, reserved: 1, available: 2, status: "Reorder" },
+      { id: "i5", product: "Logitech MX Master 3S", sku: "SKU-LOG-MX3", warehouse: "Phnom Penh DC", onHand: 6, reserved: 2, available: 4, status: "Reorder" },
+    ],
+  },
+  orders: {
+    title: "Orders",
+    description: "3,842 orders this month across all marketplace vendors.",
+    primaryAction: "Create order",
+    searchPlaceholder: "Search order or customer...",
+    metrics: [{ label: "Total orders", value: "3,842", change: "+6.2%" }, { label: "Processing", value: "960" }, { label: "Completed", value: "1,767" }, { label: "Gross value", value: "$284,540", change: "+12.8%" }],
+    columns: [{ key: "order", label: "Order", format: "mono" }, { key: "customer", label: "Customer" }, { key: "date", label: "Date" }, { key: "payment", label: "Payment", format: "status" }, { key: "status", label: "Status", format: "status" }, { key: "total", label: "Total", align: "right" }],
+    rows: evalleyOrders,
+    linkPrefix: "/orders",
+  },
+  returns: {
+    title: "Return requests",
+    description: "Manage refunds, received items and customer resolutions.",
+    primaryAction: "New return",
+    searchPlaceholder: "Search return, order or customer...",
+    metrics: [{ label: "Open requests", value: "23" }, { label: "Approved", value: "11" }, { label: "Refunded", value: "7" }, { label: "Refund value", value: "$3,840" }],
+    columns: [{ key: "return", label: "Return", format: "mono" }, { key: "order", label: "Order", format: "mono" }, { key: "customer", label: "Customer" }, { key: "reason", label: "Reason" }, { key: "refund", label: "Refund", align: "right" }, { key: "status", label: "Status", format: "status" }, { key: "date", label: "Requested" }],
+    rows: [
+      { id: "RET-3012", return: "#RET-3012", order: "#MF-24812", customer: "Noah Williams", reason: "Damaged on arrival", refund: "$54.00", status: "Approved", date: "Jun 21" },
+      { id: "RET-3011", return: "#RET-3011", order: "#MF-24809", customer: "Sophia Larsen", reason: "Changed mind", refund: "$73.10", status: "Refunded", date: "Jun 19" },
+      { id: "RET-3010", return: "#RET-3010", order: "#MF-24798", customer: "Mason Cole", reason: "Wrong size", refund: "$120.00", status: "Received", date: "Jun 18" },
+      { id: "RET-3009", return: "#RET-3009", order: "#MF-24790", customer: "Ava Petrov", reason: "Defective item", refund: "$249.99", status: "Requested", date: "Jun 18" },
+      { id: "RET-3008", return: "#RET-3008", order: "#MF-24777", customer: "Liam Chen", reason: "Not as described", refund: "$39.00", status: "Refused", date: "Jun 16" },
+    ],
+  },
+  shipments: {
+    title: "Shipments",
+    description: "Track carrier fulfillment, COD packages and delivery estimates.",
+    primaryAction: "Create shipment",
+    searchPlaceholder: "Search shipment, order or tracking...",
+    metrics: [{ label: "In transit", value: "128" }, { label: "Out for delivery", value: "44" }, { label: "Delivered today", value: "186" }, { label: "Exceptions", value: "5", change: "Action required" }],
+    columns: [{ key: "shipment", label: "Shipment", format: "mono" }, { key: "order", label: "Order", format: "mono" }, { key: "carrier", label: "Carrier" }, { key: "tracking", label: "Tracking", format: "mono" }, { key: "cod", label: "COD", format: "status" }, { key: "status", label: "Status", format: "status" }, { key: "eta", label: "ETA" }],
+    rows: [
+      { id: "SHP-8841", shipment: "#SHP-8841", order: "#MF-24815", carrier: "J&T Express", tracking: "JT883920145", cod: "No", status: "Delivered", eta: "Jun 23" },
+      { id: "SHP-8840", shipment: "#SHP-8840", order: "#MF-24814", carrier: "VET Express", tracking: "VET771203", cod: "Yes", status: "In transit", eta: "Jun 24" },
+      { id: "SHP-8839", shipment: "#SHP-8839", order: "#MF-24813", carrier: "J&T Express", tracking: "JT883918770", cod: "No", status: "Out for delivery", eta: "Jun 23" },
+      { id: "SHP-8838", shipment: "#SHP-8838", order: "#MF-24811", carrier: "Kerry Express", tracking: "KY5590112", cod: "No", status: "Label created", eta: "—" },
+      { id: "SHP-8837", shipment: "#SHP-8837", order: "#MF-24808", carrier: "J&T Express", tracking: "JT883901224", cod: "Yes", status: "Failed", eta: "Jun 22" },
+    ],
+  },
+  customers: {
+    title: "Customers",
+    description: "12,480 registered shoppers and their marketplace value.",
+    primaryAction: "Add customer",
+    searchPlaceholder: "Search customer, email or city...",
+    metrics: [{ label: "Total customers", value: "12,480", change: "+9.1%" }, { label: "VIP customers", value: "842" }, { label: "New this month", value: "1,204" }, { label: "Average lifetime value", value: "$1,840" }],
+    columns: [{ key: "customer", label: "Customer" }, { key: "email", label: "Email" }, { key: "city", label: "City" }, { key: "status", label: "Tier", format: "status" }, { key: "orders", label: "Orders", align: "right" }, { key: "spent", label: "Total spent", align: "right" }],
+    rows: evalleyCustomers,
+    linkPrefix: "/customers",
+  },
+  vendors: {
+    title: "Marketplace vendors",
+    description: "722 sellers and their catalog performance.",
+    primaryAction: "Invite vendor",
+    searchPlaceholder: "Search vendor or status...",
+    metrics: [{ label: "Active vendors", value: "689", change: "+18" }, { label: "Pending review", value: "21" }, { label: "Suspended", value: "12" }, { label: "Vendor GMV", value: "$1.84M", change: "+13.5%" }],
+    columns: [{ key: "vendor", label: "Vendor" }, { key: "rating", label: "Rating", align: "center" }, { key: "products", label: "Products", align: "right" }, { key: "revenue", label: "Revenue", align: "right" }, { key: "status", label: "Status", format: "status" }],
+    rows: [
+      { id: "technova", vendor: "TechNova Store", rating: "4.8", products: 214, revenue: "$128,400", status: "Active" },
+      { id: "urban", vendor: "Urban Threads", rating: "4.6", products: 98, revenue: "$54,120", status: "Active" },
+      { id: "greenleaf", vendor: "GreenLeaf Home", rating: "4.9", products: 156, revenue: "$76,900", status: "Active" },
+      { id: "pixelpro", vendor: "PixelPro Gear", rating: "—", products: 77, revenue: "$41,200", status: "Pending" },
+      { id: "coastal", vendor: "Coastal Outfitters", rating: "4.4", products: 132, revenue: "$63,050", status: "Active" },
+      { id: "nomad", vendor: "Nomad Supply Co", rating: "3.9", products: 45, revenue: "$18,700", status: "Suspended" },
+    ],
+  },
+  withdrawals: {
+    title: "Vendor withdrawals",
+    description: "Approve and process seller payout requests.",
+    primaryAction: "Record payout",
+    searchPlaceholder: "Search vendor, method or status...",
+    metrics: [{ label: "Pending requests", value: "3" }, { label: "Pending value", value: "$9,940" }, { label: "Paid this month", value: "$184,200" }, { label: "Average processing", value: "1.4 days" }],
+    columns: [{ key: "vendor", label: "Vendor" }, { key: "amount", label: "Amount", align: "right" }, { key: "method", label: "Method" }, { key: "date", label: "Requested" }, { key: "status", label: "Status", format: "status" }],
+    rows: [
+      { id: "w1", vendor: "TechNova Store", amount: "$4,820.00", method: "ABA Bank", date: "Jun 22", status: "Pending" },
+      { id: "w2", vendor: "GreenLeaf Home", amount: "$2,140.50", method: "Wing", date: "Jun 21", status: "Processing" },
+      { id: "w3", vendor: "Urban Threads", amount: "$1,675.00", method: "ABA Bank", date: "Jun 20", status: "Completed" },
+      { id: "w4", vendor: "Coastal Outfitters", amount: "$980.25", method: "ACLEDA", date: "Jun 19", status: "Completed" },
+      { id: "w5", vendor: "Nomad Supply Co", amount: "$310.00", method: "Wing", date: "Jun 18", status: "Refused" },
+    ],
+  },
+  ledger: {
+    title: "Commission ledger",
+    description: "Platform commission and vendor balances by order.",
+    primaryAction: "Export statement",
+    searchPlaceholder: "Search order or vendor...",
+    metrics: [{ label: "Gross marketplace value", value: "$1.84M" }, { label: "Commission earned", value: "$220K", change: "+12.1%" }, { label: "Vendor net", value: "$1.62M" }, { label: "Average rate", value: "12.4%" }],
+    columns: [{ key: "order", label: "Order", format: "mono" }, { key: "vendor", label: "Vendor" }, { key: "total", label: "Order total", align: "right" }, { key: "rate", label: "Rate", align: "right" }, { key: "commission", label: "Commission", align: "right" }, { key: "net", label: "Vendor net", align: "right" }],
+    rows: [
+      { id: "l1", order: "#MF-24815", vendor: "TechNova Store", total: "$149.00", rate: "12%", commission: "$17.88", net: "$131.12" },
+      { id: "l2", order: "#MF-24813", vendor: "GreenLeaf Home", total: "$312.20", rate: "15%", commission: "$46.83", net: "$265.37" },
+      { id: "l3", order: "#MF-24811", vendor: "Urban Threads", total: "$228.75", rate: "12%", commission: "$27.45", net: "$201.30" },
+      { id: "l4", order: "#MF-24808", vendor: "TechNova Store", total: "$441.00", rate: "12%", commission: "$52.92", net: "$388.08" },
+      { id: "l5", order: "#MF-24805", vendor: "Coastal Outfitters", total: "$96.40", rate: "10%", commission: "$9.64", net: "$86.76" },
+    ],
+  },
+} satisfies Record<string, WorkspaceConfig>;
+
+export const categoryRows: WorkspaceRow[] = [
+  { id: "electronics", category: "Electronics", slug: "electronics", products: 248, status: "Active" },
+  { id: "audio", category: "Audio & Headphones", slug: "audio", products: 64, status: "Active" },
+  { id: "wearables", category: "Wearables", slug: "wearables", products: 38, status: "Active" },
+  { id: "cameras", category: "Cameras & Photo", slug: "cameras", products: 52, status: "Active" },
+  { id: "bags", category: "Bags & Luggage", slug: "bags", products: 91, status: "Hidden" },
+  { id: "footwear", category: "Footwear", slug: "footwear", products: 176, status: "Active" },
+];
+
+export const brandRows: WorkspaceRow[] = [
+  { id: "sony", brand: "Sony", products: 86, status: "Active" },
+  { id: "apple", brand: "Apple", products: 124, status: "Active" },
+  { id: "nike", brand: "Nike", products: 210, status: "Active" },
+  { id: "canon", brand: "Canon", products: 43, status: "Active" },
+  { id: "herschel", brand: "Herschel", products: 37, status: "Active" },
+  { id: "dyson", brand: "Dyson", products: 29, status: "Active" },
+];

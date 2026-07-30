@@ -1,0 +1,19 @@
+{
+  "name": "@platform/ecommerce-core",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Commerce contracts and Laravel API adapters for Evalley modules.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@platform/plugin-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

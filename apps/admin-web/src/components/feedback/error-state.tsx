@@ -1,0 +1,2 @@
+import { AlertTriangle } from "lucide-react";
+export function ErrorState({ title = "Unable to load data", description = "Try again or contact support if the problem continues." }: { title?: string; description?: string }) { return <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6"><AlertTriangle className="size-5 text-destructive" /><h2 className="mt-3 font-semibold">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{description}</p></div>; }

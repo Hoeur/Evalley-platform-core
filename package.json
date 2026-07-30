@@ -1,0 +1,23 @@
+{
+  "name": "@platform/monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Evalley modular commerce platform — monorepo root (apps + reusable core packages).",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "typecheck:packages": "tsc --noEmit -p tsconfig.check.json",
+    "platform": "node tools/platform-cli/index.mjs"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.9.0"
+  }
+}

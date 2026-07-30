@@ -1,0 +1,68 @@
+import { crmPermissionKeys } from "@platform/crm-core/permissions";
+
+export const permissions = [
+  "dashboard.read",
+  "analytics.read",
+  "products.read",
+  "products.create",
+  "products.update",
+  "products.delete",
+  "variants.read",
+  "variants.manage",
+  "attributes.read",
+  "attributes.manage",
+  "inventory.read",
+  "inventory.manage",
+  "categories.read",
+  "categories.manage",
+  "reviews.read",
+  "reviews.manage",
+  "orders.read",
+  "orders.update",
+  "returns.read",
+  "returns.manage",
+  "shipments.read",
+  "shipments.manage",
+  "customers.read",
+  "customers.update",
+  "vendors.read",
+  "vendors.manage",
+  "withdrawals.read",
+  "withdrawals.manage",
+  "ledger.read",
+  "users.read",
+  "users.manage",
+  "settings.read",
+  "settings.update",
+  "reports.read",
+  "promotions.read",
+  "promotions.manage",
+  "marketing.read",
+  "marketing.manage",
+  "shipping.read",
+  "shipping.manage",
+  "properties.read",
+  "properties.manage",
+  "bookings.read",
+  "bookings.manage",
+  "tenants.read",
+  "tenants.manage",
+  "leases.read",
+  "leases.manage",
+  "payments.read",
+  "payments.manage",
+  "maintenance.read",
+  "maintenance.manage",
+  ...crmPermissionKeys,
+  "modules.manage",
+] as const;
+
+export type Permission = (typeof permissions)[number];
+export type Role = "owner" | "admin" | "manager" | "viewer";
+
+export function hasPermission(
+  userPermissions: readonly Permission[],
+  permission?: Permission,
+) {
+  return permission ? userPermissions.includes(permission) : true;
+}

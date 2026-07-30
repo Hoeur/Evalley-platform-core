@@ -1,0 +1,26 @@
+{
+  "name": "@platform/crm-core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable CRM add-on: leads, customers, pipelines, opportunities, proposals, invoices, contracts, tickets. Runs standalone or integrates with e-commerce, rental and booking modules.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api-client": "./src/api-client.ts",
+    "./manifest": "./src/manifest.ts",
+    "./permissions": "./src/permissions/index.ts",
+    "./domain": "./src/domain/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -b",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@platform/plugin-sdk": "workspace:*",
+    "@platform/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

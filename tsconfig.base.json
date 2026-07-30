@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@platform/shared": ["./packages/shared/src/index.ts"],
+      "@platform/shared/*": ["./packages/shared/src/*"],
+      "@platform/plugin-sdk": ["./packages/plugin-sdk/src/index.ts"],
+      "@platform/plugin-sdk/*": ["./packages/plugin-sdk/src/*"],
+      "@platform/crm-core": ["./packages/crm-core/src/index.ts"],
+      "@platform/crm-core/*": ["./packages/crm-core/src/*"],
+      "@platform/platform-core": ["./packages/platform-core/src/index.ts"],
+      "@platform/auth-core": ["./packages/auth-core/src/index.ts"],
+      "@platform/ui-core": ["./packages/ui-core/src/index.ts"],
+      "@platform/ecommerce-core": ["./packages/ecommerce-core/src/index.ts"],
+      "@platform/rental-core": ["./packages/rental-core/src/index.ts"],
+      "@platform/booking-core": ["./packages/booking-core/src/index.ts"],
+      "@platform/notification-core": ["./packages/notification-core/src/index.ts"],
+      "@platform/audit-core": ["./packages/audit-core/src/index.ts"]
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@platform/booking-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Booking module — an optional integration source for CRM.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@platform/plugin-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

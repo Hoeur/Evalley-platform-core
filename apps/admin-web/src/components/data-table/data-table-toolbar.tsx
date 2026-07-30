@@ -1,0 +1,1 @@
+export function DataTableToolbar({ filters, actions }: { filters?: React.ReactNode; actions?: React.ReactNode }) { return <div className="flex flex-col gap-3 border-b p-4 lg:flex-row lg:items-center lg:justify-between"><div className="flex flex-1 flex-wrap items-center gap-2">{filters}</div><div className="flex items-center gap-2">{actions}</div></div>; }

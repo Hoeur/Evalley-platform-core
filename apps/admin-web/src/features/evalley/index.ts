@@ -1,0 +1,10 @@
+export { AnalyticsWorkspace } from "./components/analytics-workspace";
+export { AttributesWorkspace } from "./components/attributes-workspace";
+export { CategoriesWorkspace } from "./components/categories-workspace";
+export { CustomerDetailWorkspace } from "./components/detail-workspaces";
+export { OrderDetailWorkspace } from "./components/order-detail-workspace";
+export { DataWorkspace } from "./components/data-workspace";
+export { PromotionsWorkspace } from "./components/promotions-workspace";
+export { ReviewsWorkspace } from "./components/reviews-workspace";
+export { SettingsWorkspace } from "./components/settings-workspace";
+export { evalleyCustomers, evalleyOrders, workspaceConfigs } from "./mock-data";

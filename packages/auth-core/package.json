@@ -1,0 +1,19 @@
+{
+  "name": "@platform/auth-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Identity, sessions and server-side RBAC enforcement for the platform.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@platform/plugin-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

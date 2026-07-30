@@ -1,0 +1,19 @@
+{
+  "name": "@platform/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Framework-agnostic primitives shared across the platform: ids, tenant context, result/pagination, API envelopes, cross-module contracts and event names.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./events": "./src/events/index.ts",
+    "./contracts": "./src/contracts/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -b"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@platform/notification-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Notification dispatch host (in-app/email/sms/...), provider-agnostic.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@platform/plugin-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

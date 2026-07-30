@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/design-system/ui/breadcrumb";
+export function AppBreadcrumbs({ items }: { items: { label: string; href?: string }[] }) { return <Breadcrumb><BreadcrumbList>{items.map((item, index) => <span className="contents" key={item.label}>{index > 0 && <BreadcrumbSeparator /> }<BreadcrumbItem>{item.href ? <BreadcrumbLink asChild><Link href={item.href}>{item.label}</Link></BreadcrumbLink> : <BreadcrumbPage>{item.label}</BreadcrumbPage>}</BreadcrumbItem></span>)}</BreadcrumbList></Breadcrumb>; }

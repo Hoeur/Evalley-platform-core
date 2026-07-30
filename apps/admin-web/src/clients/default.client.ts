@@ -1,0 +1,83 @@
+import {
+  defaultDarkTheme,
+  defaultLightTheme,
+} from "@/design-system/themes/default-theme";
+import type { ClientConfig } from "./client.types";
+
+export const defaultClient: ClientConfig = {
+  public: {
+    key: "default",
+    brand: {
+      name: "Commerce Admin",
+      shortName: "Commerce",
+      description: "White-label commerce operations",
+      logo: "/brands/default/logo.svg",
+    },
+    theme: {
+      light: defaultLightTheme,
+      dark: defaultDarkTheme,
+      fontSans: "Geist",
+      fontHeading: "Geist",
+    },
+    layout: {
+      defaultType: "sidebar",
+      allowedTypes: ["sidebar", "compact", "topbar"],
+      density: "comfortable",
+      sidebarCollapsible: true,
+      sidebarDefaultCollapsed: false,
+      headerSticky: true,
+      contentWidth: "full",
+    },
+    modules: [
+      "dashboard",
+      "products",
+      "orders",
+      "customers",
+      "users",
+      "modules",
+      "settings",
+    ],
+    availableModules: [
+      "dashboard",
+      "analytics",
+      "products",
+      "variants",
+      "attributes",
+      "inventory",
+      "categories",
+      "promotions",
+      "reviews",
+      "orders",
+      "returns",
+      "shipments",
+      "customers",
+      "vendors",
+      "withdrawals",
+      "ledger",
+      "marketing",
+      "shipping",
+      "reports",
+      "users",
+      "modules",
+      "settings",
+    ],
+    features: {
+      darkMode: true,
+      themeSwitcher: true,
+      layoutSwitcher: true,
+      notifications: true,
+      commandMenu: true,
+      globalSearch: true,
+      languageSwitcher: false,
+    },
+    localization: { defaultLocale: "en", supportedLocales: ["en"] },
+  },
+  server: {
+    api: {
+      baseUrl: "http://localhost:8080/api",
+      adapter: "mock",
+      timeoutMs: 15_000,
+    },
+    auth: { adapter: "mock" },
+  },
+};

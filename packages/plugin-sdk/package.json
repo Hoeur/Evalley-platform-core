@@ -1,0 +1,21 @@
+{
+  "name": "@platform/plugin-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable plugin contracts for the platform: manifest, registration descriptors, lifecycle hooks, dependency validation and the plugin registry.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -b",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@platform/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}
