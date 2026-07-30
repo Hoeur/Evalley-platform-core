@@ -1,9 +1,12 @@
 import type {
+  CrmContactRecord,
+  CrmCustomerRecord,
   CrmDashboard,
   CrmPage,
   CrmLeadConversion,
   CrmLeadPriority,
   CrmLeadStatus,
+  CrmTimelineEntry,
 } from "../contracts";
 
 export type NestCrmDashboardDto = CrmDashboard;
@@ -36,3 +39,8 @@ export type NestLeadDto = {
 export type NestLeadPageDto = CrmPage<NestLeadDto>;
 
 export type NestLeadConversionDto = CrmLeadConversion;
+
+export type NestCustomerDto = CrmCustomerRecord;
+export type NestCustomerPageDto = CrmPage<NestCustomerDto>;
+export type NestContactDto = CrmContactRecord;
+export type NestTimelineEntryDto = CrmTimelineEntry;

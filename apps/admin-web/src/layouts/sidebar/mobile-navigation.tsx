@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { cn } from "@/core/utils/cn";
+import { isNavActive } from "./sidebar-nav-link";
 import { Button } from "@/design-system/ui/button";
 import {
   Sheet,
@@ -32,6 +33,7 @@ export function MobileNavigation({
   user: { name: string; role: string };
 }) {
   const pathname = usePathname();
+  const allHrefs = groups.flatMap((group) => group.items.map((item) => item.href));
   const initials = user.name
     .split(" ")
     .map((part) => part[0])
@@ -68,10 +70,7 @@ export function MobileNavigation({
               </p>
               <div className="space-y-0.5">
                 {group.items.map((item) => {
-                  const active =
-                    pathname === item.href ||
-                    (item.href !== "/dashboard" &&
-                      pathname.startsWith(`${item.href}/`));
+                  const active = isNavActive(pathname, item.href, allHrefs);
                   return (
                     <SheetClose asChild key={item.key}>
                       <Link

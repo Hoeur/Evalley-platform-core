@@ -59,6 +59,7 @@ export const moduleRegistry: AdminModuleDefinition[] = [
   { key: "maintenance", label: "Maintenance", href: "/maintenance", icon: Wrench, navigationGroup: "Operations", order: 80, permission: "maintenance.read" },
   { key: "crm", label: "CRM", description: "Customer relationships", href: "/crm", icon: Contact, navigationGroup: "CRM", order: 205, permission: "crm.dashboard.view" },
   { key: "crmLeads", label: "Leads", href: "/crm/leads", icon: UserPlus, navigationGroup: "CRM", order: 206, permission: "crm.leads.view" },
+  { key: "crmCustomers", label: "Customers", description: "CRM accounts & contacts", href: "/crm/customers", icon: UsersRound, navigationGroup: "CRM", order: 207, permission: "crm.customers.view" },
   { key: "users", label: "Users", href: "/users", icon: UserRoundCog, navigationGroup: "Administration", order: 200, permission: "users.read" },
   { key: "modules", label: "Module Add-ons", description: "Enable client capabilities", href: "/modules", icon: Puzzle, navigationGroup: "System", order: 210, permission: "modules.manage" },
   { key: "settings", label: "Settings", href: "/settings", icon: Settings, navigationGroup: "System", order: 220, permission: "settings.read" },

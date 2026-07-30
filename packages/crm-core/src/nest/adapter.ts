@@ -1,20 +1,29 @@
 import type {
   CrmCore,
   CrmPageQuery,
+  CustomerQuery,
   LeadQuery,
   UpdateCrmLeadInput,
 } from "../contracts";
 import type {
+  NestContactDto,
   NestCrmDashboardDto,
+  NestCustomerDto,
+  NestCustomerPageDto,
   NestLeadConversionDto,
   NestLeadDto,
   NestLeadPageDto,
+  NestTimelineEntryDto,
 } from "./dto";
 import {
+  mapContact,
   mapCrmDashboard,
+  mapCustomer,
+  mapCustomerPage,
   mapLead,
   mapLeadConversion,
   mapLeadPage,
+  mapTimelineEntry,
 } from "./mappers";
 import {
   type CrmTransport,
@@ -46,6 +55,14 @@ function leadQuery(query?: LeadQuery) {
 
 function leadUpdateBody(input: UpdateCrmLeadInput) {
   return { ...input };
+}
+
+function customerQuery(query?: CustomerQuery) {
+  return {
+    ...pageQuery(query),
+    search: query?.search,
+    status: query?.status,
+  };
 }
 
 export function createNestCrmCore({
@@ -117,6 +134,97 @@ export function createNestCrmCore({
           body: input,
         });
         return mapLeadConversion(unwrapCrmData(envelope));
+      },
+    },
+    customers: {
+      async list(query) {
+        const envelope = await transport<NestCrmEnvelope<NestCustomerPageDto>>({
+          method: "GET",
+          path: "/crm/customers",
+          query: customerQuery(query),
+        });
+        return mapCustomerPage(unwrapCrmData(envelope));
+      },
+      async get(id) {
+        const envelope = await transport<NestCrmEnvelope<NestCustomerDto>>({
+          method: "GET",
+          path: `/crm/customers/${id}`,
+        });
+        return mapCustomer(unwrapCrmData(envelope));
+      },
+      async create(input) {
+        const envelope = await transport<NestCrmEnvelope<NestCustomerDto>>({
+          method: "POST",
+          path: "/crm/customers",
+          body: input,
+        });
+        return mapCustomer(unwrapCrmData(envelope));
+      },
+      async update(id, input) {
+        const envelope = await transport<NestCrmEnvelope<NestCustomerDto>>({
+          method: "PATCH",
+          path: `/crm/customers/${id}`,
+          body: input,
+        });
+        return mapCustomer(unwrapCrmData(envelope));
+      },
+      async archive(id) {
+        await transport<NestCrmEnvelope<{ id: string }>>({
+          method: "DELETE",
+          path: `/crm/customers/${id}`,
+        });
+        return true;
+      },
+      async timeline(id) {
+        const envelope = await transport<
+          NestCrmEnvelope<readonly NestTimelineEntryDto[]>
+        >({
+          method: "GET",
+          path: `/crm/customers/${id}/timeline`,
+        });
+        return unwrapCrmData(envelope).map(mapTimelineEntry);
+      },
+    },
+    contacts: {
+      async list(customerId) {
+        const envelope = await transport<
+          NestCrmEnvelope<readonly NestContactDto[]>
+        >({
+          method: "GET",
+          path: "/crm/contacts",
+          query: customerId ? { customerId } : undefined,
+        });
+        return unwrapCrmData(envelope).map(mapContact);
+      },
+      async get(id) {
+        const envelope = await transport<NestCrmEnvelope<NestContactDto>>({
+          method: "GET",
+          path: `/crm/contacts/${id}`,
+        });
+        return mapContact(unwrapCrmData(envelope));
+      },
+      async create(input) {
+        const envelope = await transport<NestCrmEnvelope<NestContactDto>>({
+          method: "POST",
+          path: "/crm/contacts",
+          body: input,
+        });
+        return mapContact(unwrapCrmData(envelope));
+      },
+      async update(id, input) {
+        const envelope = await transport<NestCrmEnvelope<NestContactDto>>({
+          method: "PATCH",
+          path: `/crm/contacts/${id}`,
+          body: input,
+        });
+        return mapContact(unwrapCrmData(envelope));
+      },
+      async delete(id) {
+        await transport<NestCrmEnvelope<{ id: string }>>({
+          method: "DELETE",
+          path: `/crm/contacts/${id}`,
+        });
+        return true;
       },
     },
   };

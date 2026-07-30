@@ -101,6 +101,109 @@ export type CrmLeadConversion = {
   readonly opportunityId: string | null;
 };
 
+export type CrmCustomerType = "INDIVIDUAL" | "COMPANY";
+export type CrmCustomerStatus =
+  "ACTIVE" | "INACTIVE" | "PROSPECT" | "ARCHIVED";
+
+export type CrmCustomerContactSummary = {
+  readonly id: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email: string | null;
+  readonly phone: string | null;
+  readonly isPrimary: boolean;
+};
+
+export type CrmCustomerRecord = {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly customerType: CrmCustomerType;
+  readonly companyName: string | null;
+  readonly displayName: string;
+  readonly email: string | null;
+  readonly phone: string | null;
+  readonly website: string | null;
+  readonly status: CrmCustomerStatus;
+  readonly accountManagerId: string | null;
+  readonly currency: string;
+  readonly source: string | null;
+  readonly contacts: readonly CrmCustomerContactSummary[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type CustomerQuery = CrmPageQuery & {
+  readonly search?: string;
+  readonly status?: CrmCustomerStatus;
+};
+
+export type CreateCrmCustomerInput = {
+  readonly customerType: CrmCustomerType;
+  readonly displayName: string;
+  readonly companyName?: string;
+  readonly email?: string;
+  readonly phone?: string;
+  readonly website?: string;
+  readonly accountManagerId?: string;
+  readonly currency?: string;
+  readonly source?: string;
+};
+
+export type UpdateCrmCustomerInput = {
+  readonly customerType?: CrmCustomerType;
+  readonly displayName?: string;
+  readonly companyName?: string | null;
+  readonly email?: string | null;
+  readonly phone?: string | null;
+  readonly website?: string | null;
+  readonly accountManagerId?: string | null;
+  readonly status?: CrmCustomerStatus;
+  readonly currency?: string;
+  readonly source?: string | null;
+};
+
+export type CrmContactRecord = {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly customerId: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email: string | null;
+  readonly phone: string | null;
+  readonly jobTitle: string | null;
+  readonly isPrimary: boolean;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type CreateCrmContactInput = {
+  readonly customerId: string;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly email?: string;
+  readonly phone?: string;
+  readonly jobTitle?: string;
+  readonly isPrimary?: boolean;
+};
+
+export type UpdateCrmContactInput = {
+  readonly firstName?: string;
+  readonly lastName?: string;
+  readonly email?: string | null;
+  readonly phone?: string | null;
+  readonly jobTitle?: string | null;
+  readonly isPrimary?: boolean;
+};
+
+export type CrmTimelineEntry = {
+  readonly id: string;
+  readonly type: string;
+  readonly subject: string;
+  readonly body: string | null;
+  readonly occurredAt: string;
+  readonly createdBy: string;
+};
+
 export interface CrmCore {
   readonly dashboard: {
     get(): Promise<CrmDashboard>;
@@ -113,5 +216,23 @@ export interface CrmCore {
     assign(id: string, assignedUserId: string | null): Promise<CrmLeadRecord>;
     archive(id: string): Promise<boolean>;
     convert(id: string, input: ConvertCrmLeadInput): Promise<CrmLeadConversion>;
+  };
+  readonly customers: {
+    list(query?: CustomerQuery): Promise<CrmPage<CrmCustomerRecord>>;
+    get(id: string): Promise<CrmCustomerRecord>;
+    create(input: CreateCrmCustomerInput): Promise<CrmCustomerRecord>;
+    update(
+      id: string,
+      input: UpdateCrmCustomerInput,
+    ): Promise<CrmCustomerRecord>;
+    archive(id: string): Promise<boolean>;
+    timeline(id: string): Promise<readonly CrmTimelineEntry[]>;
+  };
+  readonly contacts: {
+    list(customerId?: string): Promise<readonly CrmContactRecord[]>;
+    get(id: string): Promise<CrmContactRecord>;
+    create(input: CreateCrmContactInput): Promise<CrmContactRecord>;
+    update(id: string, input: UpdateCrmContactInput): Promise<CrmContactRecord>;
+    delete(id: string): Promise<boolean>;
   };
 }

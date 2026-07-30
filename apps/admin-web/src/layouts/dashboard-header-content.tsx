@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CircleHelp, Plus, Search } from "lucide-react";
+import { Bell, CircleHelp, Search } from "lucide-react";
 import type { ClientPublicConfig } from "@/clients/client.types";
 import type { SessionUser } from "@/core/auth/session.types";
+import { ThemeSwitcher } from "@/components/navigation/theme-switcher";
 import { UserMenu } from "@/components/navigation/user-menu";
 import { Button } from "@/design-system/ui/button";
 import { Input } from "@/design-system/ui/input";
@@ -53,11 +53,12 @@ export function DashboardHeaderContent({
   const pathname = usePathname();
   const active = groups
     .flatMap((group) => group.items)
-    .find(
+    .filter(
       (item) =>
         pathname === item.href ||
         (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`)),
-    );
+    )
+    .sort((a, b) => b.href.length - a.href.length)[0];
   const title = active?.label ?? "Dashboard";
   const routeKey = active?.key ?? "dashboard";
   return (
@@ -87,17 +88,7 @@ export function DashboardHeaderContent({
         </kbd>
       </div>
       <div className="hidden flex-1 lg:block" />
-      {client.modules.includes("products") && (
-        <Button
-          asChild
-          className="hidden h-10 rounded-xl px-4 text-xs font-bold shadow-sm sm:inline-flex"
-        >
-          <Link href="/products/new">
-            <Plus className="size-4" />
-            Create
-          </Link>
-        </Button>
-      )}
+      <ThemeSwitcher />
       <Button
         variant="outline"
         size="icon"

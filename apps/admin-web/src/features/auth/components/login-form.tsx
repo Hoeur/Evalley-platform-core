@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
+import { useActionState, useState } from "react";
+import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { Button } from "@/design-system/ui/button";
 import { Checkbox } from "@/design-system/ui/checkbox";
 import { Input } from "@/design-system/ui/input";
@@ -19,6 +19,7 @@ export function LoginForm({
   mockAdapter: boolean;
 }) {
   const [state, action, pending] = useActionState(loginAction, initialState);
+  const [showPassword, setShowPassword] = useState(false);
   const mockEmail = `admin@${clientKey}.local`;
 
   return (
@@ -65,12 +66,25 @@ export function LoginForm({
           <Input
             id="password"
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             autoComplete="current-password"
             defaultValue={mockAdapter ? "password" : undefined}
             required
-            className="bg-muted h-11 rounded-xl pl-10"
+            className="bg-muted h-11 rounded-xl pr-10 pl-10"
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword((value) => !value)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-pressed={showPassword}
+            className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 transition-colors"
+          >
+            {showPassword ? (
+              <EyeOff className="size-[18px]" />
+            ) : (
+              <Eye className="size-[18px]" />
+            )}
+          </button>
         </div>
       </div>
       <div className="flex items-center gap-2">
