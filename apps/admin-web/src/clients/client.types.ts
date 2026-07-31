@@ -30,6 +30,7 @@ export const moduleKeys = [
   "payments",
   "maintenance",
   "users",
+  "roles",
   "crm",
   "crmLeads",
   "crmCustomers",

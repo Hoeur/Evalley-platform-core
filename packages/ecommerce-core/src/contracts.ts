@@ -548,10 +548,138 @@ export interface CmsRepository {
   updateFooterSettings(input: SaveFooterSettingsInput): Promise<FooterSettings>;
 }
 
+/* Customers (admin surface: view, detail, reset password) */
+
+export type Customer = {
+  readonly id: string;
+  readonly name: string;
+  readonly email: string;
+  readonly phone: string | null;
+  readonly birthdate: string | null;
+  readonly isVendor: boolean;
+  readonly emailVerifiedAt: string | null;
+  readonly phoneVerifiedAt: string | null;
+  readonly addressesCount: number | null;
+  readonly reviewsCount: number | null;
+  readonly wishlistItemsCount: number | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type CustomerQuery = PageQuery & {
+  readonly search?: string;
+  readonly isVendor?: boolean;
+  readonly from?: string;
+  readonly to?: string;
+};
+
+export interface CustomerRepository {
+  list(query?: CustomerQuery): Promise<Page<Customer>>;
+  get(id: string): Promise<Customer>;
+  resetPassword(id: string, password: string): Promise<Customer>;
+}
+
+/* Promotions & discounts (admin) */
+
+export type PromotionType = "automatic" | "coupon";
+export type PromotionDiscountType =
+  | "percentage"
+  | "fixed_amount"
+  | "free_shipping";
+export type PromotionStatus =
+  | "draft"
+  | "scheduled"
+  | "active"
+  | "paused"
+  | "expired";
+
+export type PromotionConditionType =
+  | "min_spend"
+  | "product_ids"
+  | "category_ids"
+  | "first_order_only"
+  | "customer_ids";
+
+export type PromotionCondition = {
+  readonly type: PromotionConditionType;
+  readonly [key: string]: unknown;
+};
+
+export type Promotion = {
+  readonly id: string;
+  readonly slug: string | null;
+  readonly type: PromotionType;
+  readonly discountType: PromotionDiscountType;
+  readonly discountValue: number | null;
+  readonly maxDiscountAmount: number | null;
+  readonly conditions: readonly PromotionCondition[];
+  readonly priority: number;
+  readonly isExclusive: boolean;
+  readonly status: PromotionStatus;
+  readonly startsAt: string | null;
+  readonly endsAt: string | null;
+  readonly code: string | null;
+  readonly usageLimit: number | null;
+  readonly usageLimitPerCustomer: number | null;
+  readonly usedCount: number;
+  readonly translations: Translations;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type PromotionQuery = PageQuery & {
+  readonly type?: PromotionType;
+  readonly status?: PromotionStatus;
+};
+
+/** Create/update payload. Going live is a separate action (publish), never set here. */
+export type SavePromotionInput = {
+  readonly slug?: string | null;
+  readonly type: PromotionType;
+  readonly discountType: PromotionDiscountType;
+  readonly discountValue?: number | null;
+  readonly maxDiscountAmount?: number | null;
+  readonly conditions?: readonly PromotionCondition[];
+  readonly priority?: number;
+  readonly isExclusive?: boolean;
+  readonly status?: Extract<PromotionStatus, "draft" | "scheduled">;
+  readonly startsAt?: string | null;
+  readonly endsAt?: string | null;
+  readonly code?: string | null;
+  readonly usageLimit?: number | null;
+  readonly usageLimitPerCustomer?: number | null;
+  readonly translations: Translations;
+};
+
+export type PromotionRedemption = {
+  readonly id: string;
+  readonly promotionId: string;
+  readonly customerId: string | null;
+  readonly orderId: string | null;
+  readonly discountAmount: number;
+  readonly createdAt: string;
+};
+
+export interface PromotionRepository {
+  list(query?: PromotionQuery): Promise<Page<Promotion>>;
+  get(id: string): Promise<Promotion>;
+  create(input: SavePromotionInput): Promise<Promotion>;
+  update(id: string, input: Partial<SavePromotionInput>): Promise<Promotion>;
+  delete(id: string): Promise<void>;
+  publish(id: string): Promise<Promotion>;
+  pause(id: string): Promise<Promotion>;
+  listRedemptions(
+    id: string,
+    query?: PageQuery,
+  ): Promise<Page<PromotionRedemption>>;
+}
+
 export type EcommerceCore = {
   readonly catalog: CatalogRepository;
   readonly inventory: InventoryRepository;
   readonly orders: OrderRepository;
   readonly reviews: ReviewRepository;
   readonly cms: CmsRepository;
+  readonly customers: CustomerRepository;
+  readonly promotions: PromotionRepository;
 };

@@ -1,4 +1,5 @@
 import type {
+  CustomerQuery,
   EcommerceCore,
   InventoryMovementInput,
   InventoryQuery,
@@ -7,7 +8,9 @@ import type {
   OrderQuery,
   PageQuery,
   ProductQuery,
+  PromotionQuery,
   ReviewQuery,
+  SavePromotionInput,
   SaveAttributeSetInput,
   SaveAttributeValueInput,
   SaveBannerInput,
@@ -30,10 +33,13 @@ import type {
   LaravelFooterLinkDto,
   LaravelFooterSettingDto,
   LaravelFooterSocialDto,
+  LaravelCustomerDto,
   LaravelInventoryItemDto,
   LaravelInventoryMetricsDto,
   LaravelOrderDto,
   LaravelProductDto,
+  LaravelPromotionDto,
+  LaravelPromotionRedemptionDto,
   LaravelRefundDto,
   LaravelReviewDto,
   LaravelStaticPageDto,
@@ -45,6 +51,7 @@ import {
   mapBanner,
   mapBrand,
   mapCategory,
+  mapCustomer,
   mapFooterLink,
   mapFooterSettings,
   mapFooterSocial,
@@ -52,6 +59,8 @@ import {
   mapInventoryMetrics,
   mapOrder,
   mapProduct,
+  mapPromotion,
+  mapPromotionRedemption,
   mapRefund,
   mapReview,
   mapStaticPage,
@@ -359,6 +368,46 @@ function movementBody(input: InventoryMovementInput) {
     reason: input.reason,
     note: input.note,
     reference_key: input.referenceKey,
+  };
+}
+
+function customerQuery(query?: CustomerQuery) {
+  return {
+    page: query?.page,
+    per_page: query?.perPage,
+    q: query?.search,
+    is_vendor: query?.isVendor,
+    from: query?.from,
+    to: query?.to,
+  };
+}
+
+function promotionQuery(query?: PromotionQuery) {
+  return {
+    page: query?.page,
+    per_page: query?.perPage,
+    type: query?.type,
+    status: query?.status,
+  };
+}
+
+function promotionBody(input: Partial<SavePromotionInput>) {
+  return {
+    slug: input.slug,
+    type: input.type,
+    discount_type: input.discountType,
+    discount_value: input.discountValue,
+    max_discount_amount: input.maxDiscountAmount,
+    conditions: input.conditions,
+    priority: input.priority,
+    is_exclusive: input.isExclusive,
+    status: input.status,
+    starts_at: input.startsAt,
+    ends_at: input.endsAt,
+    code: input.code,
+    usage_limit: input.usageLimit,
+    usage_limit_per_customer: input.usageLimitPerCustomer,
+    translations: input.translations,
   };
 }
 
@@ -951,6 +1000,94 @@ export function createLaravelEcommerceCore({
           body: footerSettingsBody(input, locale),
         });
         return mapFooterSettings(unwrapItem(envelope), locale);
+      },
+    },
+    customers: {
+      async list(query) {
+        const envelope = await transport<LaravelEnvelope<LaravelCustomerDto>>({
+          method: "GET",
+          path: "/customers",
+          query: customerQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapCustomer) };
+      },
+      async get(id) {
+        const envelope = await transport<LaravelEnvelope<LaravelCustomerDto>>({
+          method: "GET",
+          path: `/customers/${id}`,
+        });
+        return mapCustomer(unwrapItem(envelope));
+      },
+      async resetPassword(id, password) {
+        const envelope = await transport<LaravelEnvelope<LaravelCustomerDto>>({
+          method: "POST",
+          path: `/customers/${id}/reset-password`,
+          body: { password, password_confirmation: password },
+        });
+        return mapCustomer(unwrapItem(envelope));
+      },
+    },
+    promotions: {
+      async list(query) {
+        const envelope = await transport<LaravelEnvelope<LaravelPromotionDto>>({
+          method: "GET",
+          path: "/promotions",
+          query: promotionQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapPromotion) };
+      },
+      async get(id) {
+        const envelope = await transport<LaravelEnvelope<LaravelPromotionDto>>({
+          method: "GET",
+          path: `/promotions/${id}`,
+        });
+        return mapPromotion(unwrapItem(envelope));
+      },
+      async create(input) {
+        const envelope = await transport<LaravelEnvelope<LaravelPromotionDto>>({
+          method: "POST",
+          path: "/promotions",
+          body: promotionBody(input),
+        });
+        return mapPromotion(unwrapItem(envelope));
+      },
+      async update(id, input) {
+        const envelope = await transport<LaravelEnvelope<LaravelPromotionDto>>({
+          method: "PUT",
+          path: `/promotions/${id}`,
+          body: promotionBody(input),
+        });
+        return mapPromotion(unwrapItem(envelope));
+      },
+      async delete(id) {
+        await transport({ method: "DELETE", path: `/promotions/${id}` });
+      },
+      async publish(id) {
+        const envelope = await transport<LaravelEnvelope<LaravelPromotionDto>>({
+          method: "POST",
+          path: `/promotions/${id}/publish`,
+        });
+        return mapPromotion(unwrapItem(envelope));
+      },
+      async pause(id) {
+        const envelope = await transport<LaravelEnvelope<LaravelPromotionDto>>({
+          method: "POST",
+          path: `/promotions/${id}/pause`,
+        });
+        return mapPromotion(unwrapItem(envelope));
+      },
+      async listRedemptions(id, query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelPromotionRedemptionDto>
+        >({
+          method: "GET",
+          path: `/promotions/${id}/redemptions`,
+          query: pageQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapPromotionRedemption) };
       },
     },
   };

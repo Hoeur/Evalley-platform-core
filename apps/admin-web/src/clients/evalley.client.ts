@@ -75,6 +75,7 @@ export const evalleyClient: ClientConfig = {
       "shipping",
       "reports",
       "users",
+      "roles",
       "crm",
       "crmLeads",
       "crmCustomers",

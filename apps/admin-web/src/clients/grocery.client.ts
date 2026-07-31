@@ -89,8 +89,8 @@ export const groceryClient: ClientConfig = {
       fontSans: "Geist", fontHeading: "Geist",
     },
     layout: { ...defaultClient.public.layout, defaultType: "sidebar", contentWidth: "contained" },
-    modules: ["dashboard", "products", "orders", "customers", "promotions", "marketing", "shipping", "reports", "users", "modules", "settings"],
-    availableModules: ["dashboard", "analytics", "products", "variants", "attributes", "inventory", "categories", "promotions", "reviews", "orders", "returns", "shipments", "customers", "marketing", "shipping", "reports", "users", "modules", "settings"],
+    modules: ["dashboard", "products", "orders", "customers", "promotions", "marketing", "shipping", "reports", "users", "roles", "modules", "settings"],
+    availableModules: ["dashboard", "analytics", "products", "variants", "attributes", "inventory", "categories", "promotions", "reviews", "orders", "returns", "shipments", "customers", "marketing", "shipping", "reports", "users", "roles", "modules", "settings"],
   },
   server: defaultClient.server,
 };

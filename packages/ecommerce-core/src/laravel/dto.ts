@@ -168,6 +168,55 @@ export type LaravelReviewDto = {
   readonly updated_at: string;
 };
 
+export type LaravelCustomerDto = {
+  readonly id: number | string;
+  readonly name: string;
+  readonly email: string;
+  readonly phone: string | null;
+  readonly birthdate: string | null;
+  readonly is_vendor: boolean;
+  readonly email_verified_at: string | null;
+  readonly phone_verified_at: string | null;
+  readonly addresses_count?: number;
+  readonly reviews_count?: number;
+  readonly wishlist_items_count?: number;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+export type LaravelPromotionDto = {
+  readonly id: number | string;
+  readonly slug: string | null;
+  readonly type: string;
+  readonly discount_type: string;
+  readonly discount_value: string | number | null;
+  readonly max_discount_amount: string | number | null;
+  readonly conditions: readonly Record<string, unknown>[] | null;
+  readonly priority: number;
+  readonly is_exclusive: boolean;
+  readonly status: string;
+  readonly starts_at: string | null;
+  readonly ends_at: string | null;
+  readonly code: string | null;
+  readonly usage_limit: number | null;
+  readonly usage_limit_per_customer: number | null;
+  readonly used_count: number;
+  readonly translations?: Readonly<
+    Record<string, { readonly name: string; readonly description?: string | null }>
+  >;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+export type LaravelPromotionRedemptionDto = {
+  readonly id: number | string;
+  readonly promotion_id: number | string;
+  readonly customer_id: number | string | null;
+  readonly order_id: number | string | null;
+  readonly discount_amount: string | number;
+  readonly created_at: string;
+};
+
 export type LaravelBannerDto = {
   readonly id: number | string;
   readonly link_url: string | null;

@@ -2,11 +2,35 @@ import "server-only";
 import type { AttributeSet, Review } from "@platform/ecommerce-core";
 import { getEcommerceCore } from "@/core/ecommerce/ecommerce-core.server";
 import type { ReviewView, WorkspaceConfig } from "../types";
+import type { OrdersView } from "../order-status";
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
 });
+
+export async function getOrdersData(): Promise<OrdersView> {
+  const page = await getEcommerceCore().orders.list({ perPage: 100 });
+  return {
+    orders: page.items.map((order) => ({
+      id: order.id,
+      number: order.number,
+      customerId: order.customerId,
+      status: order.status,
+      paymentStatus: order.payment?.status ?? "unpaid",
+      total: order.total,
+      totalLabel: currency.format(order.total),
+      createdAt: order.createdAt,
+      itemCount: order.items.length,
+    })),
+    metrics: {
+      totalOrders: page.total,
+      processing: page.items.filter((order) => order.status === "processing").length,
+      completed: page.items.filter((order) => order.status === "completed").length,
+      grossLabel: currency.format(page.items.reduce((sum, order) => sum + order.total, 0)),
+    },
+  };
+}
 
 function apiConfig(config: WorkspaceConfig): WorkspaceConfig {
   return { ...config, readOnly: true, sourceLabel: "core-ecommerce-api" };

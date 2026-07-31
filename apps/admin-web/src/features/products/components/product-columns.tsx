@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Eye, MoreHorizontal, Package, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/design-system/ui/badge";
@@ -19,6 +20,27 @@ import { formatDate } from "@/core/utils/dates";
 import { cn } from "@/core/utils/cn";
 import type { Product, ProductInventoryStatus } from "../types/product.types";
 import { ProductStatusBadge } from "./product-status-badge";
+
+function ProductThumb({ src, alt }: { src?: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  const showImage = Boolean(src) && !failed;
+  return (
+    <div className="border-primary/15 bg-primary/10 text-primary grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border">
+      {showImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          className="size-full object-cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Package className="size-5" />
+      )}
+    </div>
+  );
+}
 
 function InventoryCell({
   stock,
@@ -105,9 +127,7 @@ export function createProductColumns({
       ),
       cell: ({ row }) => (
         <div className="flex min-w-64 items-center gap-3">
-          <div className="border-primary/15 bg-primary/10 text-primary grid size-11 shrink-0 place-items-center rounded-xl border">
-            <Package className="size-5" />
-          </div>
+          <ProductThumb src={row.original.imageUrl} alt={row.original.name} />
           <div className="min-w-0">
             <Link
               className="hover:text-primary block truncate font-medium hover:underline"

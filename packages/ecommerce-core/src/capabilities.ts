@@ -37,10 +37,7 @@ export const ecommerceModuleCapabilities = {
   attributes: { status: "available" },
   inventory: { status: "available" },
   categories: { status: "available" },
-  promotions: {
-    status: "backend-required",
-    reason: "Promotion and discount admin endpoints are not implemented.",
-  },
+  promotions: { status: "available" },
   reviews: { status: "available" },
   orders: { status: "available" },
   returns: {
@@ -51,11 +48,7 @@ export const ecommerceModuleCapabilities = {
     status: "backend-required",
     reason: "Shipment and tracking endpoints are not implemented.",
   },
-  customers: {
-    status: "backend-required",
-    reason:
-      "The API has customer self-service endpoints but no admin customer directory.",
-  },
+  customers: { status: "available" },
   vendors: {
     status: "backend-required",
     reason: "Vendor management endpoints are not implemented.",

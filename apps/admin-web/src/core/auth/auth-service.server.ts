@@ -3,7 +3,8 @@ import { resolveClient } from "@/clients/client-resolver.server";
 import { getEnvironment } from "@/core/config/env.server";
 import { UnauthorizedError } from "@/core/errors/unauthorized-error";
 import { serverApiRequest } from "@/core/http/api-client.server";
-import { permissions } from "./permissions";
+import { permissions, type Permission } from "./permissions";
+import { resolveSessionPermissions } from "./ecommerce-permission-map";
 import {
   clearAuthCookies,
   getClientAccessToken,
@@ -11,6 +12,12 @@ import {
   type AuthTokens,
 } from "./session-cookie.server";
 import type { Session, SessionUser } from "./session.types";
+
+type MePermissionsEnvelope = {
+  readonly data: {
+    readonly item: { readonly permissions?: readonly string[] } | null;
+  };
+};
 
 type TokenDto = {
   readonly access_token: string;
@@ -42,14 +49,38 @@ function displayName(email: string) {
   );
 }
 
-function sessionUser(email: string, clientKey: string): SessionUser {
+function sessionUser(
+  email: string,
+  clientKey: string,
+  grantedPermissions: readonly Permission[],
+): SessionUser {
   return {
     id: `${clientKey}:${email.toLowerCase()}`,
     name: displayName(email),
     email: email.toLowerCase(),
     role: "owner",
-    permissions: [...permissions],
+    permissions: [...grantedPermissions],
   };
+}
+
+/**
+ * Resolve the admin's real permissions from the commerce API. Falls back to
+ * the full set if the RBAC endpoint is unavailable so a login never breaks.
+ */
+async function resolveAdminPermissions(
+  accessToken: string,
+): Promise<readonly Permission[]> {
+  try {
+    const response = await serverApiRequest<MePermissionsEnvelope>(
+      "/me/permissions",
+      { method: "GET", headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    const flags = response.data.item?.permissions;
+    if (!Array.isArray(flags)) return permissions;
+    return resolveSessionPermissions(flags);
+  } catch {
+    return permissions;
+  }
 }
 
 async function ecommerceLogin(
@@ -101,8 +132,10 @@ function validateMockCredentials(
 export async function signIn(input: SignInInput) {
   const client = resolveClient();
   let tokens: AuthTokens | null = null;
+  let grantedPermissions: readonly Permission[] = permissions;
   if (client.server.auth.adapter === "ecommerce-api") {
     tokens = await ecommerceLogin(input.email, input.password);
+    grantedPermissions = await resolveAdminPermissions(tokens.accessToken);
   } else {
     validateMockCredentials(client.public.key, input.email, input.password);
   }
@@ -113,7 +146,7 @@ export async function signIn(input: SignInInput) {
   );
   const session: Session = {
     clientKey: client.public.key,
-    user: sessionUser(input.email, client.public.key),
+    user: sessionUser(input.email, client.public.key, grantedPermissions),
     expiresAt: new Date(Date.now() + sessionLifetime * 1000).toISOString(),
   };
   await setAuthCookies(session, tokens, input.remember);

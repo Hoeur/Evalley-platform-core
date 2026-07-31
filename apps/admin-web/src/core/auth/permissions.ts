@@ -34,6 +34,8 @@ export const permissions = [
   "ledger.read",
   "users.read",
   "users.manage",
+  "roles.read",
+  "roles.manage",
   "settings.read",
   "settings.update",
   "reports.read",

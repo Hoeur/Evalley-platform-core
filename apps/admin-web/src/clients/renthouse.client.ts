@@ -105,10 +105,11 @@ export const rentHouseClient: ClientConfig = {
       "marketing",
       "reports",
       "users",
+      "roles",
       "modules",
       "settings",
     ],
-    availableModules: ["dashboard", "properties", "bookings", "tenants", "leases", "payments", "maintenance", "marketing", "reports", "users", "modules", "settings"],
+    availableModules: ["dashboard", "properties", "bookings", "tenants", "leases", "payments", "maintenance", "marketing", "reports", "users", "roles", "modules", "settings"],
   },
   server: defaultClient.server,
 };

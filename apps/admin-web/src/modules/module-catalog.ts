@@ -33,6 +33,7 @@ export const moduleRules: Record<ModuleKey, ModuleRule> = {
   payments: { dependencies: ["leases"] },
   maintenance: { dependencies: ["properties"] },
   users: { dependencies: [] },
+  roles: { dependencies: [] },
   crm: { dependencies: [] },
   crmLeads: { dependencies: ["crm"] },
   crmCustomers: { dependencies: ["crm"] },

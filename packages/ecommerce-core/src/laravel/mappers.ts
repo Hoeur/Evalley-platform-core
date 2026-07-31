@@ -7,10 +7,17 @@ import type {
   FooterLink,
   FooterSettings,
   FooterSocial,
+  Customer,
   InventoryItem,
   InventoryMetrics,
   Order,
   Product,
+  Promotion,
+  PromotionCondition,
+  PromotionDiscountType,
+  PromotionRedemption,
+  PromotionStatus,
+  PromotionType,
   PublishStatus,
   Refund,
   Review,
@@ -33,6 +40,9 @@ import type {
   LaravelOrderDto,
   LaravelProductDto,
   LaravelRefundDto,
+  LaravelCustomerDto,
+  LaravelPromotionDto,
+  LaravelPromotionRedemptionDto,
   LaravelReviewDto,
   LaravelStaticPageDto,
   LaravelStockMovementDto,
@@ -346,5 +356,64 @@ export function mapFooterSettings(
     about: t.about ?? null,
     address: t.address ?? null,
     updatedAt: dto.updated_at,
+  };
+}
+
+export function mapCustomer(dto: LaravelCustomerDto): Customer {
+  return {
+    id: String(dto.id),
+    name: dto.name,
+    email: dto.email,
+    phone: dto.phone,
+    birthdate: dto.birthdate,
+    isVendor: Boolean(dto.is_vendor),
+    emailVerifiedAt: dto.email_verified_at,
+    phoneVerifiedAt: dto.phone_verified_at,
+    addressesCount: dto.addresses_count ?? null,
+    reviewsCount: dto.reviews_count ?? null,
+    wishlistItemsCount: dto.wishlist_items_count ?? null,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapPromotion(dto: LaravelPromotionDto): Promotion {
+  const translations: Record<string, Translation> = {};
+  for (const [locale, value] of Object.entries(dto.translations ?? {})) {
+    translations[locale] = { name: value.name, description: value.description ?? null };
+  }
+  return {
+    id: String(dto.id),
+    slug: dto.slug,
+    type: dto.type as PromotionType,
+    discountType: dto.discount_type as PromotionDiscountType,
+    discountValue: money(dto.discount_value),
+    maxDiscountAmount: money(dto.max_discount_amount),
+    conditions: (dto.conditions ?? []) as readonly PromotionCondition[],
+    priority: dto.priority,
+    isExclusive: Boolean(dto.is_exclusive),
+    status: dto.status as PromotionStatus,
+    startsAt: dto.starts_at,
+    endsAt: dto.ends_at,
+    code: dto.code,
+    usageLimit: dto.usage_limit,
+    usageLimitPerCustomer: dto.usage_limit_per_customer,
+    usedCount: dto.used_count,
+    translations: translations as Translations,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapPromotionRedemption(
+  dto: LaravelPromotionRedemptionDto,
+): PromotionRedemption {
+  return {
+    id: String(dto.id),
+    promotionId: String(dto.promotion_id),
+    customerId: text(dto.customer_id),
+    orderId: text(dto.order_id),
+    discountAmount: money(dto.discount_amount) ?? 0,
+    createdAt: dto.created_at,
   };
 }
