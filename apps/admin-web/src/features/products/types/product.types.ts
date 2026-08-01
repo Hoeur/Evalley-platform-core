@@ -26,6 +26,7 @@ export type Product = {
   translations?: Translations;
   imageUrl?: string;
   imageUrls?: string[];
+  images?: { id: string; url: string }[];
   categoryName?: string;
   categoryIds?: string[];
   price: number;
@@ -62,7 +63,7 @@ export type ProductCatalogSummary = {
 };
 export type CreateProductInput = Omit<
   Product,
-  "id" | "createdAt" | "updatedAt" | "inventoryStatus" | "imageUrls"
+  "id" | "createdAt" | "updatedAt" | "inventoryStatus" | "imageUrls" | "images"
 >;
 export type UpdateProductInput = Partial<CreateProductInput>;
 import type { Translations } from "@platform/ecommerce-core";

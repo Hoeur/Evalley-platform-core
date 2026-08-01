@@ -86,6 +86,14 @@ function mediaUrl(value: unknown): string {
   return "";
 }
 
+function mediaId(value: unknown): string {
+  if (value && typeof value === "object") {
+    const id = (value as Record<string, unknown>).id;
+    if (typeof id === "string" || typeof id === "number") return String(id);
+  }
+  return "";
+}
+
 function translated(translations: Translations, locale: string): Translation {
   const preferred = translations[locale];
   if (preferred) return preferred;
@@ -121,6 +129,9 @@ export function mapProduct(dto: LaravelProductDto, locale: string): Product {
     categoryIds: dto.category_ids.map(String),
     thumbnailUrl: mediaUrl(dto.thumbnail) || null,
     imageUrls: (dto.images ?? []).map(mediaUrl).filter(Boolean),
+    images: (dto.images ?? [])
+      .map((ref) => ({ id: mediaId(ref), url: mediaUrl(ref) }))
+      .filter((image) => image.url !== ""),
     translations: dto.translations,
     name: translation.name,
     description: translation.description ?? null,

@@ -57,6 +57,10 @@ function toProduct(
     brandId: product.brandId ?? undefined,
     imageUrl: product.thumbnailUrl ?? undefined,
     imageUrls: [...product.imageUrls],
+    images: (product.images ?? []).map((image) => ({
+      id: image.id,
+      url: image.url,
+    })),
     categoryIds: [...product.categoryIds],
     categoryName: product.categoryIds
       .map((id) => categories.get(id))

@@ -47,6 +47,7 @@ import {
   type ProductFormValues,
 } from "../schemas/product.schema";
 import {
+  deleteProductImageAction,
   saveProductAction,
   uploadProductImageAction,
 } from "../api/product.mutations";
@@ -189,6 +190,7 @@ export function ProductForm({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [images, setImages] = useState<File[]>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     mode: "onChange",
@@ -220,6 +222,11 @@ export function ProductForm({
 
   const { isDirty, isValid } = form.formState;
 
+  const existingImages = (product?.images ?? []).filter(
+    (image) => !removedImageIds.includes(image.id),
+  );
+  const imagesChanged = images.length > 0 || removedImageIds.length > 0;
+
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
       if (form.formState.isDirty) event.preventDefault();
@@ -230,34 +237,55 @@ export function ProductForm({
 
   const submit = form.handleSubmit((values) =>
     startTransition(async () => {
-      const result = await saveProductAction(values, product?.id);
-      if (!result.ok) {
-        if (result.fieldErrors) {
-          Object.entries(result.fieldErrors).forEach(([field, message]) =>
-            form.setError(field as keyof ProductFormValues, { message }),
-          );
+      // Only write the product record when its own fields changed; image-only
+      // edits skip straight to the media operations below.
+      let productId = product?.id;
+      if (!product || isDirty) {
+        const result = await saveProductAction(values, product?.id);
+        if (!result.ok) {
+          if (result.fieldErrors) {
+            Object.entries(result.fieldErrors).forEach(([field, message]) =>
+              form.setError(field as keyof ProductFormValues, { message }),
+            );
+          }
+          toast.error(result.error);
+          return;
         }
-        toast.error(result.error);
+        productId = result.productId;
+      }
+
+      if (!productId) {
+        toast.error("Save the product before editing its images.");
         return;
+      }
+
+      for (const mediaId of removedImageIds) {
+        const removal = await deleteProductImageAction(productId, mediaId);
+        if (!removal.ok) {
+          toast.error(
+            `Product saved, but removing an image failed: ${removal.error}`,
+          );
+          router.push(`/products/${productId}/edit`);
+          return;
+        }
       }
 
       for (const file of images) {
         const imageData = new FormData();
         imageData.append("image", file);
-        const upload = await uploadProductImageAction(
-          result.productId,
-          imageData,
-        );
+        const upload = await uploadProductImageAction(productId, imageData);
         if (!upload.ok) {
           toast.error(`Product saved, but an image failed: ${upload.error}`);
-          router.push(`/products/${result.productId}/edit`);
+          router.push(`/products/${productId}/edit`);
           return;
         }
       }
 
       toast.success(product ? "Product updated" : "Product created");
       form.reset(values);
-      router.push(`/products/${result.productId}`);
+      setImages([]);
+      setRemovedImageIds([]);
+      router.push(`/products/${productId}`);
     }),
   );
 
@@ -560,9 +588,12 @@ export function ProductForm({
 
           <SectionCard icon={ImageIcon} title="Media">
             <ProductImagesField
-              existing={product?.imageUrls ?? []}
+              existing={existingImages}
               files={images}
               onChange={setImages}
+              onRemoveExisting={(id) =>
+                setRemovedImageIds((prev) => [...prev, id])
+              }
             />
           </SectionCard>
         </div>
@@ -570,12 +601,15 @@ export function ProductForm({
 
       <FormActions>
         <span className="mr-auto text-xs text-muted-foreground">
-          {isDirty ? "Unsaved changes" : "All changes saved"}
+          {isDirty || imagesChanged ? "Unsaved changes" : "All changes saved"}
         </span>
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancel
         </Button>
-        <Button type="submit" disabled={pending || !isDirty || !isValid}>
+        <Button
+          type="submit"
+          disabled={pending || (!isDirty && !imagesChanged) || !isValid}
+        >
           {pending ? "Saving..." : product ? "Save changes" : "Create product"}
         </Button>
       </FormActions>

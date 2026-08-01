@@ -5,14 +5,20 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/core/utils/cn";
 import { mediaSrc } from "@/core/utils/media-url";
 
+/** An already-uploaded product image, identified by its media id for deletion. */
+export type ExistingImage = { id: string; url: string };
+
 export function ProductImagesField({
   existing,
   files,
   onChange,
+  onRemoveExisting,
 }: {
-  existing: readonly string[];
+  existing: readonly ExistingImage[];
   files: File[];
   onChange: (files: File[]) => void;
+  /** Marks an already-uploaded image for removal (deleted on save). */
+  onRemoveExisting: (mediaId: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -42,14 +48,23 @@ export function ProductImagesField({
         <div>
           <p className="text-muted-foreground mb-1.5 text-xs">Current images</p>
           <div className="flex flex-wrap gap-2">
-            {existing.map((url) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={url}
-                src={mediaSrc(url)}
-                alt=""
-                className="size-16 rounded-lg border object-cover"
-              />
+            {existing.map((image) => (
+              <div key={image.id} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={mediaSrc(image.url)}
+                  alt=""
+                  className="size-16 rounded-lg border object-cover"
+                />
+                <button
+                  type="button"
+                  aria-label="Remove image"
+                  onClick={() => onRemoveExisting(image.id)}
+                  className="bg-background absolute -top-1.5 -right-1.5 grid size-5 place-items-center rounded-full border shadow-sm"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
             ))}
           </div>
         </div>

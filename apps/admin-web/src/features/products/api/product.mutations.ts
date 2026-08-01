@@ -101,6 +101,20 @@ export async function uploadProductImageAction(
     return { ok: false as const, error: normalizeError(error).message };
   }
 }
+export async function deleteProductImageAction(
+  productId: string,
+  mediaId: string,
+) {
+  try {
+    await requireModuleAccess("products", "products.update");
+    await getEcommerceCore().catalog.deleteProductImage(productId, mediaId);
+    revalidatePath("/products");
+    revalidatePath(`/products/${productId}`);
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: normalizeError(error).message };
+  }
+}
 export async function deleteProductAction(productId: string) {
   try {
     await requireModuleAccess("products", "products.delete");

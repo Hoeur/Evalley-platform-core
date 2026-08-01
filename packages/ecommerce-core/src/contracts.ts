@@ -23,6 +23,11 @@ export type UploadAsset = {
   readonly size: number;
 };
 
+export type ProductImage = {
+  readonly id: string;
+  readonly url: string;
+};
+
 export type Product = {
   readonly id: string;
   readonly brandId: string | null;
@@ -47,6 +52,7 @@ export type Product = {
   readonly categoryIds: readonly string[];
   readonly thumbnailUrl: string | null;
   readonly imageUrls: readonly string[];
+  readonly images?: readonly ProductImage[];
   readonly translations: Translations;
   readonly name: string;
   readonly description: string | null;
