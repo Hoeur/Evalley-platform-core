@@ -3,6 +3,7 @@
 import { ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/core/utils/cn";
+import { mediaSrc } from "@/core/utils/media-url";
 
 export function ProductImagesField({
   existing,
@@ -45,7 +46,7 @@ export function ProductImagesField({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={url}
-                src={url}
+                src={mediaSrc(url)}
                 alt=""
                 className="size-16 rounded-lg border object-cover"
               />

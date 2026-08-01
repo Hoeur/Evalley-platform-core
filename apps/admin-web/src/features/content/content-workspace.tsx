@@ -21,6 +21,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/page/page-container";
+import { mediaSrc } from "@/core/utils/media-url";
 import { Badge } from "@/design-system/ui/badge";
 import { Button } from "@/design-system/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/design-system/ui/card";
@@ -537,7 +538,7 @@ export function ContentWorkspace({
                       {previewUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={previewUrl}
+                          src={mediaSrc(previewUrl)}
                           alt=""
                           className="h-10 w-16 rounded-md border object-cover"
                         />

@@ -18,6 +18,7 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 import { formatCurrency } from "@/core/utils/currency";
 import { formatDate } from "@/core/utils/dates";
 import { cn } from "@/core/utils/cn";
+import { mediaSrc } from "@/core/utils/media-url";
 import type { Product, ProductInventoryStatus } from "../types/product.types";
 import { ProductStatusBadge } from "./product-status-badge";
 
@@ -29,7 +30,7 @@ function ProductThumb({ src, alt }: { src?: string; alt: string }) {
       {showImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={src}
+          src={mediaSrc(src)}
           alt={alt}
           loading="lazy"
           className="size-full object-cover"

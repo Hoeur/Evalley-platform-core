@@ -3,6 +3,7 @@
 import { ImagePlus, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/core/utils/cn";
+import { mediaSrc } from "@/core/utils/media-url";
 import { Button } from "@/design-system/ui/button";
 
 function formatBytes(bytes: number) {
@@ -84,7 +85,7 @@ export function ImagePicker({
         {shown ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={shown}
+            src={mediaSrc(shown)}
             alt=""
             className="size-24 rounded-lg border object-cover"
           />

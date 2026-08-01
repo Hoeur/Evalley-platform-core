@@ -42,6 +42,7 @@ import {
   TabsTrigger,
 } from "@/design-system/ui/tabs";
 import { Textarea } from "@/design-system/ui/textarea";
+import { mediaSrc } from "@/core/utils/media-url";
 import {
   deleteBrandAction,
   deleteCategoryAction,
@@ -89,7 +90,7 @@ function ListThumb({ url, alt }: { url?: string | null; alt: string }) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={url}
+        src={mediaSrc(url)}
         alt={alt}
         className="size-10 rounded-md border object-cover"
       />
@@ -865,7 +866,7 @@ function ImageUploadField({
         <div className="bg-muted flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border">
           {shown ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={shown} alt="" className="size-full object-cover" />
+            <img src={mediaSrc(shown)} alt="" className="size-full object-cover" />
           ) : (
             <ImageIcon className="text-muted-foreground size-5" />
           )}
