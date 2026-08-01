@@ -37,6 +37,7 @@ export const moduleRules: Record<ModuleKey, ModuleRule> = {
   crm: { dependencies: [] },
   crmLeads: { dependencies: ["crm"] },
   crmCustomers: { dependencies: ["crm"] },
+  support: { dependencies: [] },
   modules: { dependencies: [], locked: true },
   settings: { dependencies: [], locked: true },
 };

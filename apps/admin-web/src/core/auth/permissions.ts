@@ -57,6 +57,8 @@ export const permissions = [
   "payments.manage",
   "maintenance.read",
   "maintenance.manage",
+  "support.read",
+  "support.manage",
   ...crmPermissionKeys,
   "modules.manage",
 ] as const;

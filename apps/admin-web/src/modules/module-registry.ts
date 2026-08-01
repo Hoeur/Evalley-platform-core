@@ -28,6 +28,7 @@ import {
   Wrench,
   Contact,
   UserPlus,
+  Headset,
 } from "lucide-react";
 import type { AdminModuleDefinition } from "./module.types";
 
@@ -46,6 +47,7 @@ export const moduleRegistry: AdminModuleDefinition[] = [
   { key: "returns", label: "Returns", href: "/returns", icon: ArchiveRestore, navigationGroup: "Sales", order: 110, permission: "returns.read", badge: "5" },
   { key: "shipments", label: "Shipments", href: "/shipments", icon: Truck, navigationGroup: "Sales", order: 120, permission: "shipments.read" },
   { key: "customers", label: "Customers", href: "/customers", icon: Users, navigationGroup: "Sales", order: 130, permission: "customers.read" },
+  { key: "support", label: "Support Chat", description: "Live chat with customers from the app & website", href: "/support", icon: Headset, navigationGroup: "Sales", order: 135, permission: "support.read", badge: "3" },
   { key: "vendors", label: "Vendors", href: "/vendors", icon: Store, navigationGroup: "Marketplace", order: 140, permission: "vendors.read" },
   { key: "withdrawals", label: "Withdrawals", href: "/withdrawals", icon: WalletCards, navigationGroup: "Marketplace", order: 150, permission: "withdrawals.read", badge: "3" },
   { key: "ledger", label: "Commission ledger", href: "/ledger", icon: ClipboardList, navigationGroup: "Marketplace", order: 160, permission: "ledger.read" },
