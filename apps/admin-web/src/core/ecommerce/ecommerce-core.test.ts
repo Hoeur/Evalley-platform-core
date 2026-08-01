@@ -94,6 +94,75 @@ describe("@platform/ecommerce-core Laravel adapter", () => {
     });
   });
 
+  it("normalizes admin media objects (and plain URLs) to URL strings", async () => {
+    // The authenticated admin product resource returns images as media objects
+    // (id + url), unlike the public resource's bare URL strings. Passing an
+    // object into an <img src> renders "[object Object]", so the mapper must
+    // extract the URL from either shape.
+    const transport = vi.fn(async () =>
+      itemEnvelope({
+        ...productDto,
+        thumbnail: { id: 1, url: "https://cdn.example/thumb.jpg" },
+        images: [
+          "https://cdn.example/plain.jpg",
+          { id: 2, url: "https://cdn.example/a.jpg" },
+          { id: 3, original_url: "https://cdn.example/b.jpg" },
+        ],
+      }),
+    ) as EcommerceTransport;
+    const core = createLaravelEcommerceCore({ transport, locale: "en" });
+
+    const product = await core.catalog.getProduct("41");
+
+    expect(product.thumbnailUrl).toBe("https://cdn.example/thumb.jpg");
+    expect(product.imageUrls).toEqual([
+      "https://cdn.example/plain.jpg",
+      "https://cdn.example/a.jpg",
+      "https://cdn.example/b.jpg",
+    ]);
+  });
+
+  it("uploads a product image as a named image file so Laravel's `image` rule passes", async () => {
+    // Worst case: a server action forwards a nameless, typeless Blob. Appended
+    // as-is, undici sends filename="blob" + application/octet-stream, which
+    // Laravel rejects as "The image field must be an image." uploadBody must
+    // pin a real image filename + content-type.
+    let captured: { method: string; path: string; body: FormData } | undefined;
+    const transport = vi.fn(async (request) => {
+      captured = request as unknown as typeof captured;
+      return itemEnvelope(productDto);
+    }) as unknown as EcommerceTransport;
+    const core = createLaravelEcommerceCore({ transport, locale: "en" });
+
+    const blob = new Blob([new Uint8Array([1, 2, 3, 4])]);
+    await core.catalog.uploadProductImage("41", blob as unknown as File);
+
+    expect(captured?.method).toBe("POST");
+    expect(captured?.path).toBe("/catalog/products/41/images");
+    const part = captured?.body.get("image") as File;
+    expect(part).toBeInstanceOf(File);
+    expect(part.name).toMatch(/\.(jpg|jpeg|png|webp|gif|svg)$/);
+    expect(part.type).toMatch(/^image\//);
+  });
+
+  it("preserves an original image filename on upload", async () => {
+    let captured: { body: FormData } | undefined;
+    const transport = vi.fn(async (request) => {
+      captured = request as unknown as typeof captured;
+      return itemEnvelope(productDto);
+    }) as unknown as EcommerceTransport;
+    const core = createLaravelEcommerceCore({ transport, locale: "en" });
+
+    const file = new File([new Uint8Array([1, 2, 3])], "photo.png", {
+      type: "image/png",
+    });
+    await core.catalog.uploadProductImage("41", file);
+
+    const part = captured?.body.get("image") as File;
+    expect(part.name).toBe("photo.png");
+    expect(part.type).toBe("image/png");
+  });
+
   it("maps admin review moderation to the API endpoint", async () => {
     const transport = vi.fn(async () =>
       itemEnvelope({

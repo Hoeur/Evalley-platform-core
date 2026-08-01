@@ -59,6 +59,33 @@ function money(value: number | string | null): number | null {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+/**
+ * Resolve a single media reference to its URL string. The public catalog
+ * resource serializes images as bare URL strings, but the authenticated admin
+ * resource serializes them as media objects (it needs the media id so the admin
+ * can delete individual images). Passing an object straight into an `<img src>`
+ * renders `[object Object]`, so normalize both shapes to a URL here.
+ */
+function mediaUrl(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    for (const key of [
+      "url",
+      "original_url",
+      "full_url",
+      "preview_url",
+      "src",
+      "path",
+      "thumbnail",
+    ]) {
+      const candidate = record[key];
+      if (typeof candidate === "string" && candidate) return candidate;
+    }
+  }
+  return "";
+}
+
 function translated(translations: Translations, locale: string): Translation {
   const preferred = translations[locale];
   if (preferred) return preferred;
@@ -92,8 +119,8 @@ export function mapProduct(dto: LaravelProductDto, locale: string): Product {
     height: money(dto.height),
     currency: dto.currency,
     categoryIds: dto.category_ids.map(String),
-    thumbnailUrl: dto.thumbnail,
-    imageUrls: dto.images,
+    thumbnailUrl: mediaUrl(dto.thumbnail) || null,
+    imageUrls: (dto.images ?? []).map(mediaUrl).filter(Boolean),
     translations: dto.translations,
     name: translation.name,
     description: translation.description ?? null,

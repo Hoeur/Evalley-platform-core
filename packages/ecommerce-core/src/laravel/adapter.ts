@@ -243,21 +243,58 @@ function productBody(input: Partial<SaveProductInput>, locale: string) {
   };
 }
 
+const UPLOAD_IMAGE_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "image/svg+xml": "svg",
+  "image/avif": "avif",
+};
+
 function uploadBody(
   field: string,
   file: UploadAsset,
   extra?: Record<string, string>,
 ) {
   type MultipartBody = {
-    append(name: string, value: unknown): void;
+    append(name: string, value: unknown, filename?: string): void;
   };
-  const Multipart = (
-    globalThis as unknown as { FormData: new () => MultipartBody }
-  ).FormData;
-  const body = new Multipart();
-  body.append(field, file);
-  for (const [key, value] of Object.entries(extra ?? {})) {
-    body.append(key, value);
+  const runtime = globalThis as unknown as {
+    FormData: new () => MultipartBody;
+    File: new (
+      parts: readonly unknown[],
+      name: string,
+      options?: { type?: string },
+    ) => UploadAsset;
+  };
+  const body = new runtime.FormData();
+
+  // A server action can hand us a nameless / typeless Blob. Appended as-is,
+  // undici stamps the multipart part as `filename="blob"` (no extension) and,
+  // when the Blob carries no type, `Content-Type: application/octet-stream` —
+  // which Laravel's `image` validation rejects with "The image field must be
+  // an image." Force a real image filename + content-type so the upload is
+  // accepted no matter how the file reached us (browser File, forwarded Blob).
+  const asset = file as { name?: unknown; type?: unknown };
+  const originalType =
+    typeof asset.type === "string" && asset.type ? asset.type : "";
+  const isImageType = originalType.startsWith("image/");
+  const type = isImageType ? originalType : "image/jpeg";
+  const originalName =
+    typeof asset.name === "string" && asset.name.includes(".")
+      ? asset.name
+      : "";
+  const filename =
+    originalName || `${field}.${UPLOAD_IMAGE_EXTENSIONS[type] ?? "jpg"}`;
+  // Only re-wrap when the content-type is missing / non-image; otherwise keep
+  // the original file untouched and just pin the filename via the 3rd arg.
+  const value = isImageType ? file : new runtime.File([file], filename, { type });
+
+  body.append(field, value, filename);
+  for (const [key, extraValue] of Object.entries(extra ?? {})) {
+    body.append(key, extraValue);
   }
   return body;
 }

@@ -7,6 +7,23 @@ export type LaravelProductAttributeDto = {
   readonly values?: readonly string[];
 };
 
+/**
+ * A media reference. The public catalog resource returns a bare URL string;
+ * the authenticated admin resource returns an object (it carries the media id
+ * so images can be deleted individually). Both shapes are accepted and
+ * normalized to a URL by `mediaUrl` in `mappers.ts`.
+ */
+export type LaravelMediaDto = {
+  readonly id?: number | string;
+  readonly url?: string;
+  readonly original_url?: string;
+  readonly full_url?: string;
+  readonly preview_url?: string;
+  readonly thumbnail?: string;
+};
+
+export type LaravelMediaRef = string | LaravelMediaDto;
+
 export type LaravelProductDto = {
   readonly id: number | string;
   readonly brand_id: number | string | null;
@@ -29,8 +46,8 @@ export type LaravelProductDto = {
   readonly height: string | number | null;
   readonly currency: string;
   readonly category_ids: readonly (number | string)[];
-  readonly thumbnail: string | null;
-  readonly images: readonly string[];
+  readonly thumbnail: LaravelMediaRef | null;
+  readonly images: readonly LaravelMediaRef[];
   readonly translations: Translations;
   readonly attributes?: readonly LaravelProductAttributeDto[];
   readonly created_at: string;
