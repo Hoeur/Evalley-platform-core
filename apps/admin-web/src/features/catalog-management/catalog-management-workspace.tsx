@@ -84,6 +84,24 @@ function Status({ status }: { status: "draft" | "published" }) {
   );
 }
 
+function ListThumb({ url, alt }: { url?: string | null; alt: string }) {
+  if (url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt={alt}
+        className="size-10 rounded-md border object-cover"
+      />
+    );
+  }
+  return (
+    <div className="bg-muted grid size-10 place-items-center rounded-md border">
+      <ImageIcon className="text-muted-foreground size-4" />
+    </div>
+  );
+}
+
 function Field({
   label,
   children,
@@ -301,6 +319,7 @@ export function CatalogManagementWorkspace({
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-16">Image</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Parent</TableHead>
                   <TableHead>Slug</TableHead>
@@ -312,6 +331,9 @@ export function CatalogManagementWorkspace({
               <TableBody>
                 {filteredCategories.map((category) => (
                   <TableRow key={category.id}>
+                    <TableCell>
+                      <ListThumb url={category.imageUrl} alt={category.name} />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {category.name}
                       {category.featured && (
@@ -360,7 +382,7 @@ export function CatalogManagementWorkspace({
                 {filteredCategories.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="text-muted-foreground h-28 text-center"
                     >
                       No categories found.
@@ -390,6 +412,7 @@ export function CatalogManagementWorkspace({
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-16">Logo</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Website</TableHead>
@@ -401,6 +424,9 @@ export function CatalogManagementWorkspace({
               <TableBody>
                 {filteredBrands.map((brand) => (
                   <TableRow key={brand.id}>
+                    <TableCell>
+                      <ListThumb url={brand.logoUrl} alt={brand.name} />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {brand.name}
                       {brand.featured && (
@@ -445,7 +471,7 @@ export function CatalogManagementWorkspace({
                 {filteredBrands.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="text-muted-foreground h-28 text-center"
                     >
                       No brands found.

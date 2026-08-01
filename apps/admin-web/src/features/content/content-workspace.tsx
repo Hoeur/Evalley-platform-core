@@ -2,6 +2,7 @@
 
 import type {
   Banner,
+  BannerDevice,
   FooterLink,
   FooterSettings,
   FooterSocial,
@@ -66,6 +67,13 @@ import {
   saveStaticPageAction,
   uploadBannerImageAction,
 } from "./mutations";
+
+const BANNER_DEVICES: readonly BannerDevice[] = ["desktop", "tablet", "phone"];
+const BANNER_DEVICE_LABELS: Record<BannerDevice, string> = {
+  desktop: "Desktop",
+  tablet: "Tablet",
+  phone: "Phone",
+};
 
 function Field({
   label,
@@ -192,6 +200,7 @@ export function ContentWorkspace({
   const [editingBanner, setEditingBanner] = useState<Banner>();
   const [bannerForm, setBannerForm] = useState(emptyBanner);
   const [bannerImage, setBannerImage] = useState<File>();
+  const [bannerDevice, setBannerDevice] = useState<BannerDevice>("desktop");
 
   const [linkDialog, setLinkDialog] = useState(false);
   const [linkForm, setLinkForm] = useState(emptyLink);
@@ -270,6 +279,7 @@ export function ContentWorkspace({
         : emptyBanner,
     );
     setBannerImage(undefined);
+    setBannerDevice("desktop");
     setBannerDialog(true);
   }
 
@@ -293,6 +303,7 @@ export function ContentWorkspace({
       if (bannerImage) {
         const data = new FormData();
         data.append("image", bannerImage);
+        data.append("device", bannerDevice);
         const upload = await uploadBannerImageAction(result.item.id, data);
         if (!upload.ok) {
           toast.error(`Banner saved, but image failed: ${upload.error}`);
@@ -515,13 +526,18 @@ export function ContentWorkspace({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {banners.map((banner) => (
+                {banners.map((banner) => {
+                  const previewUrl =
+                    banner.imageUrls.desktop ??
+                    banner.imageUrls.tablet ??
+                    banner.imageUrls.phone;
+                  return (
                   <TableRow key={banner.id}>
                     <TableCell>
-                      {banner.imageUrls[0] ? (
+                      {previewUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={banner.imageUrls[0]}
+                          src={previewUrl}
                           alt=""
                           className="h-10 w-16 rounded-md border object-cover"
                         />
@@ -560,7 +576,8 @@ export function ContentWorkspace({
                       )}
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
                 {banners.length === 0 && (
                   <TableRow>
                     <TableCell
@@ -883,13 +900,47 @@ export function ContentWorkspace({
                 />
               </Field>
             </div>
-            <Field label="Image">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(event) => setBannerImage(event.target.files?.[0])}
-              />
-            </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Device">
+                <Select
+                  value={bannerDevice}
+                  onValueChange={(value) =>
+                    setBannerDevice(value as BannerDevice)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BANNER_DEVICES.map((device) => (
+                      <SelectItem key={device} value={device}>
+                        {BANNER_DEVICE_LABELS[device]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Image">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => setBannerImage(event.target.files?.[0])}
+                />
+              </Field>
+            </div>
+            {editingBanner ? (
+              <p className="text-muted-foreground text-xs">
+                {editingBanner.imageUrls[bannerDevice]
+                  ? `Uploading replaces the current ${BANNER_DEVICE_LABELS[bannerDevice]} image.`
+                  : `No ${BANNER_DEVICE_LABELS[bannerDevice]} image yet.`}{" "}
+                Each device holds its own image — switch the device to set another.
+              </p>
+            ) : (
+              <p className="text-muted-foreground text-xs">
+                The image is saved for the selected device after the banner is
+                created.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBannerDialog(false)}>

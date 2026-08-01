@@ -426,12 +426,21 @@ export interface ReviewRepository {
   reject(id: string): Promise<Review>;
 }
 
+export type BannerDevice = "desktop" | "tablet" | "phone";
+
+/**
+ * Each banner holds one image per device, replaced independently. The backend
+ * returns them keyed by device (`{ desktop, tablet, phone }`), with `null` for
+ * any device that has no image yet.
+ */
+export type BannerImageUrls = Readonly<Record<BannerDevice, string | null>>;
+
 export type Banner = {
   readonly id: string;
   readonly linkUrl: string | null;
   readonly status: PublishStatus;
   readonly order: number;
-  readonly imageUrls: readonly string[];
+  readonly imageUrls: BannerImageUrls;
   readonly title: string;
   readonly subtitle: string | null;
   readonly buttonText: string | null;
@@ -522,7 +531,11 @@ export interface CmsRepository {
   createBanner(input: SaveBannerInput): Promise<Banner>;
   updateBanner(id: string, input: Partial<SaveBannerInput>): Promise<Banner>;
   deleteBanner(id: string): Promise<void>;
-  uploadBannerImage(id: string, file: UploadAsset): Promise<Banner>;
+  uploadBannerImage(
+    id: string,
+    device: BannerDevice,
+    file: UploadAsset,
+  ): Promise<Banner>;
   listStaticPages(query?: PageQuery): Promise<Page<StaticPage>>;
   createStaticPage(input: SaveStaticPageInput): Promise<StaticPage>;
   updateStaticPage(

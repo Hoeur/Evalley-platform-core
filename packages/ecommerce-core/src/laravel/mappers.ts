@@ -2,6 +2,7 @@ import type {
   AttributeSet,
   AttributeValue,
   Banner,
+  BannerImageUrls,
   Brand,
   Category,
   FooterLink,
@@ -283,6 +284,17 @@ function pickLocale<T>(
     {}) as Partial<T>;
 }
 
+function mapBannerImageUrls(
+  raw: LaravelBannerDto["image_urls"],
+): BannerImageUrls {
+  const source = (raw ?? {}) as Record<string, string | null>;
+  return {
+    desktop: source.desktop ?? null,
+    tablet: source.tablet ?? null,
+    phone: source.phone ?? null,
+  };
+}
+
 export function mapBanner(dto: LaravelBannerDto, locale: string): Banner {
   const t = pickLocale(dto.translations, locale);
   return {
@@ -290,7 +302,7 @@ export function mapBanner(dto: LaravelBannerDto, locale: string): Banner {
     linkUrl: dto.link_url,
     status: dto.status as PublishStatus,
     order: dto.order,
-    imageUrls: dto.image_urls,
+    imageUrls: mapBannerImageUrls(dto.image_urls),
     title: t.title ?? "",
     subtitle: t.subtitle ?? null,
     buttonText: t.button_text ?? null,

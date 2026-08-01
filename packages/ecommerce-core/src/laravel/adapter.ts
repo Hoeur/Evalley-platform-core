@@ -243,7 +243,11 @@ function productBody(input: Partial<SaveProductInput>, locale: string) {
   };
 }
 
-function uploadBody(field: string, file: UploadAsset) {
+function uploadBody(
+  field: string,
+  file: UploadAsset,
+  extra?: Record<string, string>,
+) {
   type MultipartBody = {
     append(name: string, value: unknown): void;
   };
@@ -252,6 +256,9 @@ function uploadBody(field: string, file: UploadAsset) {
   ).FormData;
   const body = new Multipart();
   body.append(field, file);
+  for (const [key, value] of Object.entries(extra ?? {})) {
+    body.append(key, value);
+  }
   return body;
 }
 
@@ -878,11 +885,11 @@ export function createLaravelEcommerceCore({
       async deleteBanner(id) {
         await transport({ method: "DELETE", path: `/cms/banners/${id}` });
       },
-      async uploadBannerImage(id, file) {
+      async uploadBannerImage(id, device, file) {
         const envelope = await transport<LaravelEnvelope<LaravelBannerDto>>({
           method: "POST",
           path: `/cms/banners/${id}/image`,
-          body: uploadBody("image", file),
+          body: uploadBody("image", file, { device }),
         });
         return mapBanner(unwrapItem(envelope), locale);
       },

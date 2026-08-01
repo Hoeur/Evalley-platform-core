@@ -64,6 +64,16 @@ export async function saveBannerAction(input: SaveBannerInput, id?: string) {
   }
 }
 
+const BANNER_DEVICES = ["desktop", "tablet", "phone"] as const;
+type BannerDevice = (typeof BANNER_DEVICES)[number];
+
+function isBannerDevice(value: unknown): value is BannerDevice {
+  return (
+    typeof value === "string" &&
+    (BANNER_DEVICES as readonly string[]).includes(value)
+  );
+}
+
 export async function uploadBannerImageAction(id: string, formData: FormData) {
   try {
     await guard();
@@ -71,7 +81,11 @@ export async function uploadBannerImageAction(id: string, formData: FormData) {
     if (!(file instanceof Blob) || file.size === 0) {
       return { ok: false as const, error: "Choose an image to upload." };
     }
-    await cms().uploadBannerImage(id, file);
+    const device = formData.get("device");
+    if (!isBannerDevice(device)) {
+      return { ok: false as const, error: "Choose a device for this image." };
+    }
+    await cms().uploadBannerImage(id, device, file);
     revalidatePath("/content");
     return { ok: true as const };
   } catch (error) {

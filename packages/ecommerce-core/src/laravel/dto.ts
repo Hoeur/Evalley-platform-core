@@ -222,7 +222,9 @@ export type LaravelBannerDto = {
   readonly link_url: string | null;
   readonly status: string;
   readonly order: number;
-  readonly image_urls: readonly string[];
+  // Backend returns one image URL per device, keyed by device name
+  // (`{ desktop, tablet, phone }`), with `null` where no image is set.
+  readonly image_urls: Readonly<Record<string, string | null>>;
   readonly translations: Readonly<
     Record<
       string,
