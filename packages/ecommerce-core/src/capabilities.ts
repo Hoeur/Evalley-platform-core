@@ -17,6 +17,7 @@ export const ecommerceModuleKeys = [
   "marketing",
   "shipping",
   "reports",
+  "notifications",
 ] as const;
 
 export type EcommerceModuleKey = (typeof ecommerceModuleKeys)[number];
@@ -49,18 +50,9 @@ export const ecommerceModuleCapabilities = {
     reason: "Shipment and tracking endpoints are not implemented.",
   },
   customers: { status: "available" },
-  vendors: {
-    status: "backend-required",
-    reason: "Vendor management endpoints are not implemented.",
-  },
-  withdrawals: {
-    status: "backend-required",
-    reason: "Vendor payout endpoints are not implemented.",
-  },
-  ledger: {
-    status: "backend-required",
-    reason: "Marketplace commission ledger endpoints are not implemented.",
-  },
+  vendors: { status: "available" },
+  withdrawals: { status: "available" },
+  ledger: { status: "available" },
   marketing: {
     status: "backend-required",
     reason: "Commerce marketing endpoints are not implemented.",
@@ -73,6 +65,7 @@ export const ecommerceModuleCapabilities = {
     status: "backend-required",
     reason: "Commerce reporting aggregates are not implemented.",
   },
+  notifications: { status: "available" },
 } satisfies Record<EcommerceModuleKey, EcommerceModuleCapability>;
 
 export function isEcommerceModuleKey(

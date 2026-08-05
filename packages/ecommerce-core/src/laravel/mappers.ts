@@ -26,6 +26,12 @@ import type {
   StockMovement,
   Translation,
   Translations,
+  AdminNotification,
+  NotificationBroadcast,
+  NotificationChannel,
+  NotificationType,
+  BroadcastTargetType,
+  CustomerGroupSummary,
 } from "../contracts";
 import type {
   LaravelAttributeSetDto,
@@ -47,6 +53,25 @@ import type {
   LaravelReviewDto,
   LaravelStaticPageDto,
   LaravelStockMovementDto,
+  LaravelNotificationDto,
+  LaravelBroadcastDto,
+  LaravelCustomerGroupDto,
+} from "./dto";
+import type {
+  VendorStore,
+  CommissionEntry,
+  VendorBalance,
+  Withdrawal,
+  StoreStatus,
+  CommissionType,
+  LedgerEntryType,
+  WithdrawalStatus,
+} from "../contracts";
+import type {
+  LaravelStoreDto,
+  LaravelCommissionEntryDto,
+  LaravelVendorBalanceDto,
+  LaravelWithdrawalDto,
 } from "./dto";
 
 function text(value: number | string | null): string | null {
@@ -464,6 +489,137 @@ export function mapPromotionRedemption(
     customerId: text(dto.customer_id),
     orderId: text(dto.order_id),
     discountAmount: money(dto.discount_amount) ?? 0,
+    createdAt: dto.created_at,
+  };
+}
+
+export function mapAdminNotification(
+  dto: LaravelNotificationDto,
+): AdminNotification {
+  return {
+    id: String(dto.id),
+    type: dto.type as NotificationType,
+    title: dto.title,
+    body: dto.body,
+    data: (dto.data ?? {}) as Readonly<Record<string, unknown>>,
+    isRead: Boolean(dto.is_read),
+    readAt: dto.read_at,
+    createdAt: dto.created_at,
+  };
+}
+
+export function mapNotificationBroadcast(
+  dto: LaravelBroadcastDto,
+): NotificationBroadcast {
+  return {
+    id: String(dto.id),
+    title: dto.title,
+    body: dto.body,
+    data: (dto.data ?? {}) as Readonly<Record<string, unknown>>,
+    channels: (dto.channels ?? []) as readonly NotificationChannel[],
+    targetType: dto.target_type as BroadcastTargetType,
+    targetIds: (dto.target_ids ?? []).map(String),
+    recipientsCount: dto.recipients_count,
+    deliveredCount: dto.delivered_count ?? null,
+    sentBy: dto.sent_by
+      ? {
+          id: dto.sent_by.id === null ? null : String(dto.sent_by.id),
+          name: dto.sent_by.name,
+        }
+      : null,
+    sentAt: dto.sent_at,
+    createdAt: dto.created_at,
+  };
+}
+
+export function mapCustomerGroupSummary(
+  dto: LaravelCustomerGroupDto,
+): CustomerGroupSummary {
+  return {
+    id: String(dto.id),
+    name: dto.name,
+    slug: dto.slug,
+    description: dto.description,
+    isActive: Boolean(dto.is_active),
+    customersCount: dto.customers_count ?? null,
+  };
+}
+
+
+export function mapVendorStore(dto: LaravelStoreDto): VendorStore {
+  return {
+    id: String(dto.id),
+    customerId: String(dto.customer_id),
+    name: dto.name,
+    slug: dto.slug,
+    description: dto.description,
+    logoUrl: dto.logo_url,
+    contactEmail: dto.contact_email,
+    contactPhone: dto.contact_phone,
+    addressLine: dto.address_line,
+    city: dto.city,
+    countryCode: dto.country_code,
+    status: dto.status as StoreStatus,
+    isTrading: Boolean(dto.is_trading),
+    statusReason: dto.status_reason,
+    statusChangedAt: dto.status_changed_at,
+    approvedAt: dto.approved_at,
+    commissionType: dto.commission_type as CommissionType,
+    commissionValue: money(dto.commission_value) ?? 0,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapCommissionEntry(
+  dto: LaravelCommissionEntryDto,
+): CommissionEntry {
+  return {
+    id: String(dto.id),
+    type: dto.type as LedgerEntryType,
+    orderId: text(dto.order_id),
+    orderNumber: dto.order_number,
+    grossAmount: money(dto.gross_amount) ?? 0,
+    commissionAmount: money(dto.commission_amount) ?? 0,
+    netAmount: money(dto.net_amount) ?? 0,
+    commissionType: (dto.commission_type as CommissionType | null) ?? null,
+    commissionValue: money(dto.commission_value),
+    withdrawalId: text(dto.withdrawal_id),
+    note: dto.note,
+    createdAt: dto.created_at,
+  };
+}
+
+export function mapVendorBalance(dto: LaravelVendorBalanceDto): VendorBalance {
+  return {
+    storeId: String(dto.store_id),
+    ledgerBalance: money(dto.ledger_balance) ?? 0,
+    onHold: money(dto.on_hold) ?? 0,
+    available: money(dto.available) ?? 0,
+    grossSales: money(dto.gross_sales) ?? 0,
+    commissionCharged: money(dto.commission_charged) ?? 0,
+    paidOut: money(dto.paid_out) ?? 0,
+  };
+}
+
+export function mapWithdrawal(dto: LaravelWithdrawalDto): Withdrawal {
+  return {
+    id: String(dto.id),
+    reference: dto.reference,
+    storeId: String(dto.store_id),
+    storeName: dto.store_name ?? null,
+    amount: money(dto.amount) ?? 0,
+    status: dto.status as WithdrawalStatus,
+    accountHolder: dto.account_holder,
+    accountNumber: dto.account_number,
+    bankName: dto.bank_name,
+    note: dto.note,
+    processedBy: text(dto.processed_by),
+    requestedAt: dto.requested_at,
+    approvedAt: dto.approved_at,
+    rejectedAt: dto.rejected_at,
+    paidAt: dto.paid_at,
+    cancelledAt: dto.cancelled_at,
     createdAt: dto.created_at,
   };
 }

@@ -113,3 +113,41 @@ export async function deleteVariantAction(parentId: string, variantId: string) {
     return failure(error);
   }
 }
+
+// A variation is itself a full product row, so its images go through the very
+// same catalog media endpoints a top-level product uses — only the id differs
+// (the variant's own product id, not the parent's). No new API surface is
+// needed; this just exposes it to the variant workspace under variants.manage.
+export async function uploadVariantImageAction(
+  variantId: string,
+  parentId: string,
+  formData: FormData,
+) {
+  try {
+    await requireModuleAccess("variants", "variants.manage");
+    const file = formData.get("image");
+    if (!(file instanceof Blob) || file.size === 0) {
+      return { ok: false as const, error: "Choose an image to upload." };
+    }
+    await getEcommerceCore().catalog.uploadProductImage(variantId, file);
+    refreshVariantPages(parentId);
+    return { ok: true as const };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function deleteVariantImageAction(
+  variantId: string,
+  parentId: string,
+  mediaId: string,
+) {
+  try {
+    await requireModuleAccess("variants", "variants.manage");
+    await getEcommerceCore().catalog.deleteProductImage(variantId, mediaId);
+    refreshVariantPages(parentId);
+    return { ok: true as const };
+  } catch (error) {
+    return failure(error);
+  }
+}

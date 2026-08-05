@@ -35,6 +35,7 @@ export const moduleKeys = [
   "crmLeads",
   "crmCustomers",
   "support",
+  "notifications",
   "modules",
   "settings",
 ] as const;

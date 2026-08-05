@@ -693,6 +693,267 @@ export interface PromotionRepository {
   ): Promise<Page<PromotionRedemption>>;
 }
 
+/* Notifications — admin inbox + customer broadcasts */
+
+export type NotificationType =
+  | "order.placed"
+  | "order.status_changed"
+  | "order.paid"
+  | "order.cancelled"
+  | "order.refunded"
+  | "review.approved"
+  | "review.rejected"
+  | "stock.low"
+  | "stock.out"
+  | "admin.broadcast";
+
+export type NotificationChannel = "in_app" | "mail" | "telegram" | "fcm";
+export type BroadcastTargetType = "all" | "customers" | "groups";
+
+export type AdminNotification = {
+  readonly id: string;
+  readonly type: NotificationType;
+  readonly title: string;
+  readonly body: string;
+  readonly data: Readonly<Record<string, unknown>>;
+  readonly isRead: boolean;
+  readonly readAt: string | null;
+  readonly createdAt: string;
+};
+
+export type NotificationQuery = PageQuery & {
+  readonly unreadOnly?: boolean;
+};
+
+export type NotificationBroadcast = {
+  readonly id: string;
+  readonly title: string;
+  readonly body: string;
+  readonly data: Readonly<Record<string, unknown>>;
+  readonly channels: readonly NotificationChannel[];
+  readonly targetType: BroadcastTargetType;
+  readonly targetIds: readonly string[];
+  readonly recipientsCount: number;
+  // Lags recipientsCount while the notifications queue drains; null until the
+  // API reports a count (the create response does not include one).
+  readonly deliveredCount: number | null;
+  readonly sentBy: {
+    readonly id: string | null;
+    readonly name: string | null;
+  } | null;
+  readonly sentAt: string | null;
+  readonly createdAt: string;
+};
+
+export type SendBroadcastInput = {
+  readonly title: string;
+  readonly body: string;
+  readonly targetType: BroadcastTargetType;
+  readonly customerIds?: readonly string[];
+  readonly groupIds?: readonly string[];
+  readonly channels: readonly NotificationChannel[];
+  readonly data?: Readonly<Record<string, unknown>>;
+};
+
+export type CustomerGroupSummary = {
+  readonly id: string;
+  readonly name: string;
+  readonly slug: string | null;
+  readonly description: string | null;
+  readonly isActive: boolean;
+  readonly customersCount: number | null;
+};
+
+export type CustomerGroupQuery = PageQuery & {
+  readonly search?: string;
+  readonly activeOnly?: boolean;
+};
+
+export interface NotificationRepository {
+  listInbox(query?: NotificationQuery): Promise<Page<AdminNotification>>;
+  unreadCount(): Promise<number>;
+  markRead(id: string): Promise<AdminNotification>;
+  markAllRead(): Promise<number>;
+  delete(id: string): Promise<void>;
+  listBroadcasts(query?: PageQuery): Promise<Page<NotificationBroadcast>>;
+  getBroadcast(id: string): Promise<NotificationBroadcast>;
+  sendBroadcast(input: SendBroadcastInput): Promise<NotificationBroadcast>;
+  listCustomerGroups(
+    query?: CustomerGroupQuery,
+  ): Promise<Page<CustomerGroupSummary>>;
+}
+
+/* Marketplace — vendors (stores), commission ledger, withdrawals (admin) */
+
+export type StoreStatus =
+  | "pending"
+  | "approved"
+  | "suspended"
+  | "rejected"
+  | "deactivated";
+
+export type CommissionType = "percentage" | "fixed_amount";
+
+export type LedgerEntryType =
+  | "accrued"
+  | "reversal"
+  | "partial_reversal"
+  | "adjustment"
+  | "payout";
+
+export type WithdrawalStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "paid"
+  | "cancelled";
+
+export type VendorStore = {
+  readonly id: string;
+  readonly customerId: string;
+  readonly name: string;
+  readonly slug: string;
+  readonly description: string | null;
+  readonly logoUrl: string | null;
+  readonly contactEmail: string | null;
+  readonly contactPhone: string | null;
+  readonly addressLine: string | null;
+  readonly city: string | null;
+  readonly countryCode: string | null;
+  readonly status: StoreStatus;
+  readonly isTrading: boolean;
+  readonly statusReason: string | null;
+  readonly statusChangedAt: string | null;
+  readonly approvedAt: string | null;
+  readonly commissionType: CommissionType;
+  readonly commissionValue: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type VendorStoreQuery = PageQuery & {
+  readonly status?: StoreStatus;
+  readonly search?: string;
+};
+
+export type UpdateStoreStatusInput = {
+  readonly status: StoreStatus;
+  readonly reason?: string | null;
+};
+
+export type UpdateCommissionInput = {
+  readonly commissionType: CommissionType;
+  readonly commissionValue: number;
+};
+
+/**
+ * One row of the append-only commission ledger. Amounts are signed: a
+ * positive net credits the vendor, a negative one (reversal, payout, or a
+ * debit adjustment) reduces the balance. commissionType/commissionValue are
+ * the rate frozen at accrual time, not the store's current terms.
+ */
+export type CommissionEntry = {
+  readonly id: string;
+  readonly type: LedgerEntryType;
+  readonly orderId: string | null;
+  readonly orderNumber: string | null;
+  readonly grossAmount: number;
+  readonly commissionAmount: number;
+  readonly netAmount: number;
+  readonly commissionType: CommissionType | null;
+  readonly commissionValue: number | null;
+  readonly withdrawalId: string | null;
+  readonly note: string | null;
+  readonly createdAt: string;
+};
+
+export type CommissionQuery = PageQuery & {
+  readonly type?: LedgerEntryType;
+  readonly from?: string;
+  readonly to?: string;
+};
+
+export type LedgerQuery = PageQuery & {
+  readonly storeId?: string;
+  readonly type?: LedgerEntryType;
+};
+
+/** A store's money position, recomputed from the ledger on every read. */
+export type VendorBalance = {
+  readonly storeId: string;
+  readonly ledgerBalance: number;
+  readonly onHold: number;
+  readonly available: number;
+  readonly grossSales: number;
+  readonly commissionCharged: number;
+  readonly paidOut: number;
+};
+
+export type AdjustmentInput = {
+  readonly amount: number;
+  readonly note: string;
+};
+
+export type Withdrawal = {
+  readonly id: string;
+  readonly reference: string;
+  readonly storeId: string;
+  readonly storeName: string | null;
+  readonly amount: number;
+  readonly status: WithdrawalStatus;
+  readonly accountHolder: string | null;
+  readonly accountNumber: string | null;
+  readonly bankName: string | null;
+  readonly note: string | null;
+  readonly processedBy: string | null;
+  readonly requestedAt: string | null;
+  readonly approvedAt: string | null;
+  readonly rejectedAt: string | null;
+  readonly paidAt: string | null;
+  readonly cancelledAt: string | null;
+  readonly createdAt: string;
+};
+
+export type WithdrawalQuery = PageQuery & {
+  readonly status?: WithdrawalStatus;
+  readonly storeId?: string;
+};
+
+/** Admin may only move a withdrawal to one of these three states. */
+export type ProcessWithdrawalInput = {
+  readonly status: Extract<WithdrawalStatus, "approved" | "rejected" | "paid">;
+  readonly reason?: string | null;
+};
+
+export interface VendorRepository {
+  listStores(query?: VendorStoreQuery): Promise<Page<VendorStore>>;
+  getStore(id: string): Promise<VendorStore>;
+  updateStoreStatus(
+    id: string,
+    input: UpdateStoreStatusInput,
+  ): Promise<VendorStore>;
+  updateStoreCommission(
+    id: string,
+    input: UpdateCommissionInput,
+  ): Promise<VendorStore>;
+  listStoreCommissions(
+    storeId: string,
+    query?: CommissionQuery,
+  ): Promise<Page<CommissionEntry>>;
+  storeBalance(storeId: string): Promise<VendorBalance>;
+  adjustStoreBalance(
+    storeId: string,
+    input: AdjustmentInput,
+  ): Promise<CommissionEntry>;
+  listLedger(query?: LedgerQuery): Promise<Page<CommissionEntry>>;
+  listWithdrawals(query?: WithdrawalQuery): Promise<Page<Withdrawal>>;
+  getWithdrawal(id: string): Promise<Withdrawal>;
+  processWithdrawal(
+    id: string,
+    input: ProcessWithdrawalInput,
+  ): Promise<Withdrawal>;
+}
+
 export type EcommerceCore = {
   readonly catalog: CatalogRepository;
   readonly inventory: InventoryRepository;
@@ -701,4 +962,6 @@ export type EcommerceCore = {
   readonly cms: CmsRepository;
   readonly customers: CustomerRepository;
   readonly promotions: PromotionRepository;
+  readonly notifications: NotificationRepository;
+  readonly vendors: VendorRepository;
 };

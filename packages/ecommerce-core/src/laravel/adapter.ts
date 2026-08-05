@@ -23,6 +23,9 @@ import type {
   SaveStaticPageInput,
   SaveVariationInput,
   UploadAsset,
+  NotificationQuery,
+  CustomerGroupQuery,
+  SendBroadcastInput,
 } from "../contracts";
 import type {
   LaravelAttributeSetDto,
@@ -44,6 +47,11 @@ import type {
   LaravelReviewDto,
   LaravelStaticPageDto,
   LaravelStockMovementDto,
+  LaravelNotificationDto,
+  LaravelBroadcastDto,
+  LaravelUnreadCountDto,
+  LaravelMarkedReadDto,
+  LaravelCustomerGroupDto,
 } from "./dto";
 import {
   mapAttributeSet,
@@ -65,6 +73,9 @@ import {
   mapReview,
   mapStaticPage,
   mapStockMovement,
+  mapAdminNotification,
+  mapNotificationBroadcast,
+  mapCustomerGroupSummary,
 } from "./mappers";
 import {
   type EcommerceTransport,
@@ -72,6 +83,18 @@ import {
   unwrapItem,
   unwrapItems,
 } from "./transport";
+import type {
+  LaravelStoreDto,
+  LaravelCommissionEntryDto,
+  LaravelVendorBalanceDto,
+  LaravelWithdrawalDto,
+} from "./dto";
+import {
+  mapVendorStore,
+  mapCommissionEntry,
+  mapVendorBalance,
+  mapWithdrawal,
+} from "./mappers";
 
 type LaravelAdapterOptions = {
   readonly transport: EcommerceTransport;
@@ -452,6 +475,41 @@ function promotionBody(input: Partial<SavePromotionInput>) {
     usage_limit: input.usageLimit,
     usage_limit_per_customer: input.usageLimitPerCustomer,
     translations: input.translations,
+  };
+}
+
+function notificationQuery(query?: NotificationQuery) {
+  return {
+    page: query?.page,
+    per_page: query?.perPage,
+    unread_only: query?.unreadOnly,
+  };
+}
+
+function customerGroupQuery(query?: CustomerGroupQuery) {
+  return {
+    page: query?.page,
+    per_page: query?.perPage,
+    q: query?.search,
+    active_only: query?.activeOnly,
+  };
+}
+
+function broadcastBody(input: SendBroadcastInput) {
+  return {
+    title: input.title,
+    body: input.body,
+    target_type: input.targetType,
+    // The API validates these as integers; ids travel as strings on the
+    // frontend, so coerce and only send the one the target type needs.
+    customer_ids:
+      input.targetType === "customers"
+        ? input.customerIds?.map(Number)
+        : undefined,
+    group_ids:
+      input.targetType === "groups" ? input.groupIds?.map(Number) : undefined,
+    channels: input.channels,
+    data: input.data,
   };
 }
 
@@ -1132,6 +1190,199 @@ export function createLaravelEcommerceCore({
         });
         const page = unwrapItems(envelope);
         return { ...page, items: page.items.map(mapPromotionRedemption) };
+      },
+    },
+    notifications: {
+      async listInbox(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelNotificationDto>
+        >({
+          method: "GET",
+          path: "/notifications",
+          query: notificationQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapAdminNotification) };
+      },
+      async unreadCount() {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelUnreadCountDto>
+        >({
+          method: "GET",
+          path: "/notifications/unread-count",
+        });
+        return unwrapItem(envelope).unread_count;
+      },
+      async markRead(id) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelNotificationDto>
+        >({
+          method: "POST",
+          path: `/notifications/${id}/read`,
+        });
+        return mapAdminNotification(unwrapItem(envelope));
+      },
+      async markAllRead() {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelMarkedReadDto>
+        >({
+          method: "POST",
+          path: "/notifications/read-all",
+        });
+        return unwrapItem(envelope).marked_read;
+      },
+      async delete(id) {
+        await transport({ method: "DELETE", path: `/notifications/${id}` });
+      },
+      async listBroadcasts(query) {
+        const envelope = await transport<LaravelEnvelope<LaravelBroadcastDto>>({
+          method: "GET",
+          path: "/notification-broadcasts",
+          query: pageQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapNotificationBroadcast) };
+      },
+      async getBroadcast(id) {
+        const envelope = await transport<LaravelEnvelope<LaravelBroadcastDto>>({
+          method: "GET",
+          path: `/notification-broadcasts/${id}`,
+        });
+        return mapNotificationBroadcast(unwrapItem(envelope));
+      },
+      async sendBroadcast(input) {
+        const envelope = await transport<LaravelEnvelope<LaravelBroadcastDto>>({
+          method: "POST",
+          path: "/notification-broadcasts",
+          body: broadcastBody(input),
+        });
+        return mapNotificationBroadcast(unwrapItem(envelope));
+      },
+      async listCustomerGroups(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelCustomerGroupDto>
+        >({
+          method: "GET",
+          path: "/customer-groups",
+          query: customerGroupQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapCustomerGroupSummary) };
+      },
+    },
+    vendors: {
+      async listStores(query) {
+        const envelope = await transport<LaravelEnvelope<LaravelStoreDto>>({
+          method: "GET",
+          path: "/vendors",
+          query: { ...pageQuery(query), status: query?.status, q: query?.search },
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapVendorStore) };
+      },
+      async getStore(id) {
+        const envelope = await transport<LaravelEnvelope<LaravelStoreDto>>({
+          method: "GET",
+          path: `/vendors/${id}`,
+        });
+        return mapVendorStore(unwrapItem(envelope));
+      },
+      async updateStoreStatus(id, input) {
+        const envelope = await transport<LaravelEnvelope<LaravelStoreDto>>({
+          method: "PATCH",
+          path: `/vendors/${id}/status`,
+          body: { status: input.status, reason: input.reason ?? undefined },
+        });
+        return mapVendorStore(unwrapItem(envelope));
+      },
+      async updateStoreCommission(id, input) {
+        const envelope = await transport<LaravelEnvelope<LaravelStoreDto>>({
+          method: "PATCH",
+          path: `/vendors/${id}/commission`,
+          body: {
+            commission_type: input.commissionType,
+            commission_value: input.commissionValue,
+          },
+        });
+        return mapVendorStore(unwrapItem(envelope));
+      },
+      async listStoreCommissions(storeId, query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelCommissionEntryDto>
+        >({
+          method: "GET",
+          path: `/vendors/${storeId}/commissions`,
+          query: {
+            ...pageQuery(query),
+            type: query?.type,
+            from: query?.from,
+            to: query?.to,
+          },
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapCommissionEntry) };
+      },
+      async storeBalance(storeId) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelVendorBalanceDto>
+        >({
+          method: "GET",
+          path: `/vendors/${storeId}/balance`,
+        });
+        return mapVendorBalance(unwrapItem(envelope));
+      },
+      async adjustStoreBalance(storeId, input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelCommissionEntryDto>
+        >({
+          method: "POST",
+          path: `/vendors/${storeId}/adjustments`,
+          body: { amount: input.amount, note: input.note },
+        });
+        return mapCommissionEntry(unwrapItem(envelope));
+      },
+      async listLedger(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelCommissionEntryDto>
+        >({
+          method: "GET",
+          path: "/commissions",
+          query: {
+            ...pageQuery(query),
+            store_id: query?.storeId,
+            type: query?.type,
+          },
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapCommissionEntry) };
+      },
+      async listWithdrawals(query) {
+        const envelope = await transport<LaravelEnvelope<LaravelWithdrawalDto>>({
+          method: "GET",
+          path: "/withdrawals",
+          query: {
+            ...pageQuery(query),
+            status: query?.status,
+            store_id: query?.storeId,
+          },
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapWithdrawal) };
+      },
+      async getWithdrawal(id) {
+        const envelope = await transport<LaravelEnvelope<LaravelWithdrawalDto>>({
+          method: "GET",
+          path: `/withdrawals/${id}`,
+        });
+        return mapWithdrawal(unwrapItem(envelope));
+      },
+      async processWithdrawal(id, input) {
+        const envelope = await transport<LaravelEnvelope<LaravelWithdrawalDto>>({
+          method: "PATCH",
+          path: `/withdrawals/${id}/status`,
+          body: { status: input.status, reason: input.reason ?? undefined },
+        });
+        return mapWithdrawal(unwrapItem(envelope));
       },
     },
   };

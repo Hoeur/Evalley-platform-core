@@ -30,6 +30,8 @@ const GOVERNED: readonly Permission[] = [
   "users.manage",
   "roles.read",
   "roles.manage",
+  "notifications.read",
+  "notifications.manage",
 ];
 
 /** commerce API permission flag → frontend permission key(s). */
@@ -84,6 +86,8 @@ const FLAG_MAP: Record<string, readonly Permission[]> = {
   "roles.create": ["roles.manage"],
   "roles.update": ["roles.manage"],
   "roles.delete": ["roles.manage"],
+  "notifications.broadcast.view": ["notifications.read"],
+  "notifications.broadcast.send": ["notifications.manage"],
 };
 
 /**

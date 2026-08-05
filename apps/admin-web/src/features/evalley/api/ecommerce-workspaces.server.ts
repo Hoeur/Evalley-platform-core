@@ -260,3 +260,153 @@ export async function getReviewViews(): Promise<readonly ReviewView[]> {
   const page = await getEcommerceCore().reviews.list({ perPage: 100 });
   return page.items.map(reviewView);
 }
+
+const STORE_STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  approved: "Approved",
+  suspended: "Suspended",
+  rejected: "Rejected",
+  deactivated: "Deactivated",
+};
+
+function commissionLabel(type: string, value: number): string {
+  return type === "percentage" ? `${value}%` : currency.format(value);
+}
+
+export async function getVendorsWorkspace(): Promise<WorkspaceConfig> {
+  const page = await getEcommerceCore().vendors.listStores({ perPage: 100 });
+  return apiConfig({
+    title: "Vendors",
+    description: `${page.total} marketplace stores from the commerce API.`,
+    primaryAction: "Add vendor",
+    searchPlaceholder: "Search store or slug...",
+    metrics: [
+      { label: "Total stores", value: String(page.total) },
+      {
+        label: "Trading",
+        value: String(page.items.filter((store) => store.isTrading).length),
+      },
+      {
+        label: "Pending",
+        value: String(page.items.filter((store) => store.status === "pending").length),
+      },
+      {
+        label: "Suspended",
+        value: String(page.items.filter((store) => store.status === "suspended").length),
+      },
+    ],
+    columns: [
+      { key: "store", label: "Store" },
+      { key: "slug", label: "Slug", format: "mono" },
+      { key: "commission", label: "Commission", align: "right" },
+      { key: "contact", label: "Contact" },
+      { key: "status", label: "Status", format: "status" },
+    ],
+    rows: page.items.map((store) => ({
+      id: store.id,
+      store: store.name,
+      slug: store.slug,
+      commission: commissionLabel(store.commissionType, store.commissionValue),
+      contact: store.contactEmail ?? "—",
+      status: STORE_STATUS_LABELS[store.status] ?? store.status,
+    })),
+  });
+}
+
+export async function getWithdrawalsWorkspace(): Promise<WorkspaceConfig> {
+  const page = await getEcommerceCore().vendors.listWithdrawals({ perPage: 100 });
+  const pending = page.items.filter((item) => item.status === "pending");
+  return apiConfig({
+    title: "Withdrawals",
+    description: `${page.total} vendor payout requests from the commerce API.`,
+    primaryAction: "New withdrawal",
+    searchPlaceholder: "Search reference or store...",
+    metrics: [
+      { label: "Total requests", value: String(page.total) },
+      {
+        label: "Pending",
+        value: String(pending.length),
+        change: pending.length ? "Action required" : undefined,
+      },
+      {
+        label: "Paid",
+        value: String(page.items.filter((item) => item.status === "paid").length),
+      },
+      {
+        label: "Pending value",
+        value: currency.format(pending.reduce((sum, item) => sum + item.amount, 0)),
+      },
+    ],
+    columns: [
+      { key: "reference", label: "Reference", format: "mono" },
+      { key: "store", label: "Store" },
+      { key: "amount", label: "Amount", align: "right" },
+      { key: "requested", label: "Requested" },
+      { key: "status", label: "Status", format: "status" },
+    ],
+    rows: page.items.map((item) => ({
+      id: item.id,
+      reference: item.reference,
+      store: item.storeName ?? `Store #${item.storeId}`,
+      amount: currency.format(item.amount),
+      requested: item.requestedAt
+        ? new Date(item.requestedAt).toLocaleDateString("en-US")
+        : "—",
+      status: item.status,
+    })),
+  });
+}
+
+const LEDGER_TYPE_LABELS: Record<string, string> = {
+  accrued: "Accrued",
+  reversal: "Reversal",
+  partial_reversal: "Partial reversal",
+  adjustment: "Adjustment",
+  payout: "Payout",
+};
+
+export async function getLedgerWorkspace(): Promise<WorkspaceConfig> {
+  const page = await getEcommerceCore().vendors.listLedger({ perPage: 100 });
+  const credited = page.items.reduce(
+    (sum, entry) => (entry.netAmount > 0 ? sum + entry.netAmount : sum),
+    0,
+  );
+  const debited = page.items.reduce(
+    (sum, entry) => (entry.netAmount < 0 ? sum + entry.netAmount : sum),
+    0,
+  );
+  return apiConfig({
+    title: "Commission ledger",
+    description: `${page.total} ledger entries across every vendor.`,
+    primaryAction: "Add entry",
+    searchPlaceholder: "Search order or type...",
+    metrics: [
+      { label: "Entries", value: String(page.total) },
+      {
+        label: "Commission charged",
+        value: currency.format(
+          page.items.reduce((sum, entry) => sum + entry.commissionAmount, 0),
+        ),
+      },
+      { label: "Credited (page)", value: currency.format(credited) },
+      { label: "Debited (page)", value: currency.format(debited) },
+    ],
+    columns: [
+      { key: "entry", label: "Entry", format: "mono" },
+      { key: "type", label: "Type", format: "status" },
+      { key: "order", label: "Order", format: "mono" },
+      { key: "commission", label: "Commission", align: "right" },
+      { key: "net", label: "Net", align: "right" },
+      { key: "date", label: "Date" },
+    ],
+    rows: page.items.map((entry) => ({
+      id: entry.id,
+      entry: `#${entry.id}`,
+      type: LEDGER_TYPE_LABELS[entry.type] ?? entry.type,
+      order: entry.orderNumber ?? "—",
+      commission: currency.format(entry.commissionAmount),
+      net: currency.format(entry.netAmount),
+      date: new Date(entry.createdAt).toLocaleDateString("en-US"),
+    })),
+  });
+}

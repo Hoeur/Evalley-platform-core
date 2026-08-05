@@ -293,3 +293,117 @@ export type LaravelFooterSettingDto = {
   >;
   readonly updated_at: string;
 };
+
+export type LaravelNotificationDto = {
+  readonly id: number | string;
+  readonly type: string;
+  readonly title: string;
+  readonly body: string;
+  readonly data: Readonly<Record<string, unknown>> | null;
+  readonly is_read: boolean;
+  readonly read_at: string | null;
+  readonly created_at: string;
+};
+
+export type LaravelBroadcastDto = {
+  readonly id: number | string;
+  readonly title: string;
+  readonly body: string;
+  readonly data: Readonly<Record<string, unknown>> | null;
+  readonly channels: readonly string[];
+  readonly target_type: string;
+  readonly target_ids: readonly (number | string)[] | null;
+  readonly recipients_count: number;
+  readonly delivered_count?: number;
+  readonly sent_by?: {
+    readonly id: number | string | null;
+    readonly name: string | null;
+  } | null;
+  readonly sent_at: string | null;
+  readonly created_at: string;
+};
+
+export type LaravelUnreadCountDto = { readonly unread_count: number };
+export type LaravelMarkedReadDto = { readonly marked_read: number };
+
+export type LaravelCustomerGroupDto = {
+  readonly id: number | string;
+  readonly name: string;
+  readonly slug: string | null;
+  readonly description: string | null;
+  readonly is_active: boolean;
+  readonly customers_count?: number;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+
+/* Marketplace — vendor stores, commission ledger, withdrawals (admin) */
+
+export type LaravelStoreDto = {
+  readonly id: number | string;
+  readonly customer_id: number | string;
+  readonly name: string;
+  readonly slug: string;
+  readonly description: string | null;
+  readonly logo_url: string | null;
+  readonly contact_email: string | null;
+  readonly contact_phone: string | null;
+  readonly address_line: string | null;
+  readonly city: string | null;
+  readonly country_code: string | null;
+  readonly status: string;
+  readonly is_trading: boolean;
+  readonly status_reason: string | null;
+  readonly status_changed_at: string | null;
+  readonly approved_at: string | null;
+  readonly commission_type: string;
+  readonly commission_value: number | string;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+export type LaravelCommissionEntryDto = {
+  readonly id: number | string;
+  readonly type: string;
+  readonly order_id: number | string | null;
+  readonly order_number: string | null;
+  readonly gross_amount: number | string;
+  readonly commission_amount: number | string;
+  readonly net_amount: number | string;
+  readonly commission_type: string | null;
+  readonly commission_value: number | string | null;
+  readonly withdrawal_id: number | string | null;
+  readonly note: string | null;
+  readonly created_at: string;
+};
+
+export type LaravelVendorBalanceDto = {
+  readonly store_id: number | string;
+  readonly ledger_balance: number | string;
+  readonly on_hold: number | string;
+  readonly available: number | string;
+  readonly gross_sales: number | string;
+  readonly commission_charged: number | string;
+  readonly paid_out: number | string;
+};
+
+export type LaravelWithdrawalDto = {
+  readonly id: number | string;
+  readonly reference: string;
+  readonly store_id: number | string;
+  readonly store_name?: string | null;
+  readonly amount: number | string;
+  readonly status: string;
+  readonly account_holder: string | null;
+  readonly account_number: string | null;
+  readonly bank_name: string | null;
+  readonly note: string | null;
+  readonly processed_by: number | string | null;
+  readonly requested_at: string | null;
+  readonly approved_at: string | null;
+  readonly rejected_at: string | null;
+  readonly paid_at: string | null;
+  readonly cancelled_at: string | null;
+  readonly created_at: string;
+};

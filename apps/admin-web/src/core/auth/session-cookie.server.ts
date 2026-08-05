@@ -70,7 +70,9 @@ function cookieOptions(remember: boolean, maxAge: number) {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    secure:
+      getEnvironment().AUTH_COOKIE_SECURE ??
+      process.env.NODE_ENV === "production",
     path: "/",
     ...(remember ? { maxAge } : {}),
   };

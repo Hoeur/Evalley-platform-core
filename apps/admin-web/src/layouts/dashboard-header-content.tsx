@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, CircleHelp, Search } from "lucide-react";
+import { CircleHelp, Search } from "lucide-react";
 import type { ClientPublicConfig } from "@/clients/client.types";
 import type { SessionUser } from "@/core/auth/session.types";
 import { ThemeSwitcher } from "@/components/navigation/theme-switcher";
@@ -9,6 +9,7 @@ import { UserMenu } from "@/components/navigation/user-menu";
 import { Button } from "@/design-system/ui/button";
 import { Input } from "@/design-system/ui/input";
 import { MobileNavigation } from "./sidebar/mobile-navigation";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 
 type HeaderGroup = {
   label: string;
@@ -89,15 +90,7 @@ export function DashboardHeaderContent({
       </div>
       <div className="hidden flex-1 lg:block" />
       <ThemeSwitcher />
-      <Button
-        variant="outline"
-        size="icon"
-        className="bg-card relative size-10 rounded-xl"
-        aria-label="Notifications"
-      >
-        <Bell className="size-[18px]" />
-        <span className="bg-primary ring-card absolute top-2 right-2 size-1.5 rounded-full ring-2" />
-      </Button>
+      <NotificationBell />
       <Button
         variant="outline"
         size="icon"

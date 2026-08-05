@@ -191,7 +191,10 @@ describe("@platform/ecommerce-core Laravel adapter", () => {
 
   it("marks modules without backend endpoints as backend-required", () => {
     expect(ecommerceModuleCapabilities.products.status).toBe("available");
-    expect(ecommerceModuleCapabilities.promotions.status).toBe("backend-required");
-    expect(ecommerceModuleCapabilities.customers.status).toBe("backend-required");
+    expect(ecommerceModuleCapabilities.vendors.status).toBe("available");
+    expect(ecommerceModuleCapabilities.withdrawals.status).toBe("available");
+    expect(ecommerceModuleCapabilities.ledger.status).toBe("available");
+    expect(ecommerceModuleCapabilities.returns.status).toBe("backend-required");
+    expect(ecommerceModuleCapabilities.marketing.status).toBe("backend-required");
   });
 });

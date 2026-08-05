@@ -9,6 +9,7 @@ import {
   Boxes,
   DollarSign,
   Eye,
+  Image as ImageIcon,
   Package,
   Pencil,
   Plus,
@@ -21,6 +22,8 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/page/page-container";
+import { mediaSrc } from "@/core/utils/media-url";
+import { ProductImagesField } from "@/features/products/components/product-images-field";
 import { Badge } from "@/design-system/ui/badge";
 import { Button } from "@/design-system/ui/button";
 import { Card, CardContent } from "@/design-system/ui/card";
@@ -53,7 +56,9 @@ import {
 import {
   createVariantAction,
   deleteVariantAction,
+  deleteVariantImageAction,
   updateVariantAction,
+  uploadVariantImageAction,
 } from "./mutations";
 import type { VariantDetailsValues } from "./schemas";
 
@@ -165,6 +170,10 @@ export function VariantManagementWorkspace({
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>(
     {},
   );
+  const [variantImages, setVariantImages] = useState<File[]>([]);
+  const [removedVariantImageIds, setRemovedVariantImageIds] = useState<
+    string[]
+  >([]);
 
   const visibleVariants = useMemo(
     () =>
@@ -221,6 +230,8 @@ export function VariantManagementWorkspace({
         : emptyVariant,
     );
     setSelectedValues({});
+    setVariantImages([]);
+    setRemovedVariantImageIds([]);
     setDialogOpen(true);
   }
 
@@ -237,6 +248,42 @@ export function VariantManagementWorkspace({
         toast.error(result.error);
         return;
       }
+
+      // Variation rows are created without media (the create/update payload
+      // carries no images), so the picture step runs here against the variant's
+      // own product id — its own id when editing, or the freshly created row's.
+      const variantId = editing?.id ?? result.item?.id;
+      if (variantId) {
+        for (const mediaId of removedVariantImageIds) {
+          const removal = await deleteVariantImageAction(
+            variantId,
+            parent.id,
+            mediaId,
+          );
+          if (!removal.ok) {
+            toast.error(
+              `Variant saved, but removing an image failed: ${removal.error}`,
+            );
+            router.refresh();
+            return;
+          }
+        }
+        for (const file of variantImages) {
+          const imageData = new FormData();
+          imageData.append("image", file);
+          const upload = await uploadVariantImageAction(
+            variantId,
+            parent.id,
+            imageData,
+          );
+          if (!upload.ok) {
+            toast.error(`Variant saved, but an image failed: ${upload.error}`);
+            router.refresh();
+            return;
+          }
+        }
+      }
+
       toast.success(editing ? "Variant updated" : "Variant created");
       setDialogOpen(false);
       router.refresh();
@@ -347,7 +394,19 @@ export function VariantManagementWorkspace({
                 <TableRow key={variant.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
-                      {variant.name || "Untitled variant"}
+                      {variant.thumbnailUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={mediaSrc(variant.thumbnailUrl)}
+                          alt=""
+                          className="size-8 shrink-0 rounded border object-cover"
+                        />
+                      ) : (
+                        <div className="bg-muted grid size-8 shrink-0 place-items-center rounded border">
+                          <ImageIcon className="text-muted-foreground size-4" />
+                        </div>
+                      )}
+                      <span>{variant.name || "Untitled variant"}</span>
                       {variant.featured && (
                         <Badge variant="outline" className="font-normal">
                           Featured
@@ -677,6 +736,31 @@ export function VariantManagementWorkspace({
                   />
                 </div>
               </div>
+            </Section>
+
+            <Section
+              icon={ImageIcon}
+              title="Images"
+              description={
+                editing
+                  ? "Photos shown for this specific variant."
+                  : "Pick photos now — they upload right after the variant is created."
+              }
+            >
+              <ProductImagesField
+                existing={
+                  editing
+                    ? (editing.images ?? []).filter(
+                        (image) => !removedVariantImageIds.includes(image.id),
+                      )
+                    : []
+                }
+                files={variantImages}
+                onChange={setVariantImages}
+                onRemoveExisting={(id) =>
+                  setRemovedVariantImageIds((prev) => [...prev, id])
+                }
+              />
             </Section>
           </div>
 
