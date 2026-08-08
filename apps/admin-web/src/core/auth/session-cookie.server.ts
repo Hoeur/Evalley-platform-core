@@ -4,17 +4,25 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { resolveClient } from "@/clients/client-resolver.server";
 import { getEnvironment } from "@/core/config/env.server";
-import { permissions } from "./permissions";
+import { permissions, type Permission } from "./permissions";
 import type { Session } from "./session.types";
 
-const sessionSchema = z.object({
+/**
+ * The signed session lives in a cookie, so it must stay well under the browser
+ * ~4KB per-cookie limit. Serialising the whole permission list (all ecommerce
+ * + CRM permissions) blew past that limit, so the browser silently dropped the
+ * session cookie and bounced the user to /login on every navigation. We store
+ * permissions as a compact bitmask over the canonical `permissions` order and
+ * expand it back on read, keeping per-admin RBAC subsets intact.
+ */
+const wireSchema = z.object({
   clientKey: z.string().min(1),
   user: z.object({
     id: z.string().min(1),
     name: z.string().min(1),
     email: z.email(),
     role: z.enum(["owner", "admin", "manager", "viewer"]),
-    permissions: z.array(z.enum(permissions)),
+    p: z.string(),
   }),
   expiresAt: z.iso.datetime(),
 });
@@ -39,8 +47,37 @@ function signature(payload: string) {
     .digest("base64url");
 }
 
+function encodePermissionBits(granted: readonly Permission[]): string {
+  const set = new Set<Permission>(granted);
+  const bytes = new Uint8Array(Math.ceil(permissions.length / 8));
+  permissions.forEach((perm, index) => {
+    if (set.has(perm)) bytes[index >> 3] |= 1 << (index & 7);
+  });
+  return Buffer.from(bytes).toString("base64url");
+}
+
+function decodePermissionBits(encoded: string): Permission[] {
+  const bytes = Buffer.from(encoded, "base64url");
+  const granted: Permission[] = [];
+  permissions.forEach((perm, index) => {
+    if (((bytes[index >> 3] ?? 0) >> (index & 7)) & 1) granted.push(perm);
+  });
+  return granted;
+}
+
 function encodeSession(session: Session) {
-  const payload = Buffer.from(JSON.stringify(session)).toString("base64url");
+  const wire = {
+    clientKey: session.clientKey,
+    user: {
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      role: session.user.role,
+      p: encodePermissionBits(session.user.permissions),
+    },
+    expiresAt: session.expiresAt,
+  };
+  const payload = Buffer.from(JSON.stringify(wire)).toString("base64url");
   return `${payload}.${signature(payload)}`;
 }
 
@@ -55,12 +92,24 @@ function decodeSession(value: string): Session | null {
   if (
     received.length !== expected.length ||
     !timingSafeEqual(received, expected)
-  )
+  ) {
     return null;
+  }
   try {
-    return sessionSchema.parse(
+    const wire = wireSchema.parse(
       JSON.parse(Buffer.from(payload, "base64url").toString("utf8")),
-    ) as Session;
+    );
+    return {
+      clientKey: wire.clientKey,
+      user: {
+        id: wire.user.id,
+        name: wire.user.name,
+        email: wire.user.email,
+        role: wire.user.role,
+        permissions: decodePermissionBits(wire.user.p),
+      },
+      expiresAt: wire.expiresAt,
+    };
   } catch {
     return null;
   }
@@ -90,7 +139,9 @@ export async function setAuthCookies(
     Math.min(tokens?.expiresIn ?? 30 * 24 * 60 * 60, 30 * 24 * 60 * 60),
   );
   const options = cookieOptions(remember, maxAge);
-  cookieStore.set(names.session, encodeSession(session), options);
+  const encoded = encodeSession(session);
+  console.warn(`[auth] session cookie bytes=${encoded.length} (browser cap ~4096)`);
+  cookieStore.set(names.session, encoded, options);
   if (tokens) {
     cookieStore.set(names.accessToken, tokens.accessToken, options);
     if (tokens.refreshToken) {
