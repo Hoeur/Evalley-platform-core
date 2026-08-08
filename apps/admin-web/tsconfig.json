@@ -35,5 +35,10 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "exports"]
+  "exclude": [
+    "node_modules",
+    "exports",
+    "src/features/support",
+    "src/features/chat-embed"
+  ]
 }

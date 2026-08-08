@@ -30,6 +30,17 @@ export async function getChatTokenForCurrentAgent(): Promise<ChatTokenResponse |
   const env = getEnvironment();
   const agent = session.user;
 
+  // Option 0 (recommended) — a cg_live_ subscription key. No user credentials:
+  // the key resolves to the organization and its owner account on the Chat API,
+  // and we trade it for a full agent inbox token via /gateway/agent-session.
+  if (env.CHAT_API_SUBSCRIPTION_KEY) {
+    return requestAgentSession(
+      env.CHAT_API_BASE_URL,
+      env.CHAT_API_SUBSCRIPTION_KEY,
+      env.CHAT_API_TOKEN_TTL_S,
+    );
+  }
+
   // Option A — service-token endpoint.
   if (env.CHAT_API_SERVICE_KEY) {
     return requestServiceToken(env.CHAT_API_BASE_URL, env.CHAT_API_SERVICE_KEY, {
@@ -129,6 +140,40 @@ async function loginOrRegisterAgent(
   };
   tokenCache.set(agent.email, token);
   return token;
+}
+
+/** Option 0 — trade a cg_live_ subscription key for a full agent inbox token. */
+async function requestAgentSession(
+  baseUrl: string,
+  subscriptionKey: string,
+  fallbackTtlS: number,
+): Promise<ChatTokenResponse> {
+  const response = await fetch(`${baseUrl}/gateway/agent-session`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "X-Subscription-Key": subscriptionKey,
+    },
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Chat agent-session request failed (${response.status}). ` +
+        "Check CHAT_API_SUBSCRIPTION_KEY (a cg_live_… key) and CHAT_API_BASE_URL.",
+    );
+  }
+  const data = (await response.json()) as {
+    accessToken: string;
+    chatUserId: string;
+    organizationId?: string | null;
+  };
+  return {
+    accessToken: data.accessToken,
+    chatUserId: data.chatUserId,
+    organizationId: data.organizationId ?? null,
+    expiresAt: jwtExpiryIso(data.accessToken, fallbackTtlS),
+  };
 }
 
 async function requestServiceToken(

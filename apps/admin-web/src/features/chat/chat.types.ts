@@ -93,4 +93,10 @@ export interface ChatTokenResponse {
   chatUserId: string;
   /** ISO timestamp when the access token expires. */
   expiresAt: string;
+  /**
+   * Organization the token is scoped to. Present when the token was minted from
+   * a subscription key (which carries its org); the inbox embed uses it so it
+   * doesn't have to resolve the org separately.
+   */
+  organizationId?: string | null;
 }

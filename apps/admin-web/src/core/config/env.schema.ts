@@ -42,6 +42,13 @@ export const envSchema = z.object({
   /** Server-side base URL for the Chat API REST + service-token endpoint. */
   CHAT_API_BASE_URL: z.url().default("http://localhost:3001/api"),
   /**
+   * Option 0 (recommended): a cg_live_… subscription key. The dashboard trades
+   * it for a full agent inbox token via POST /gateway/agent-session — no user
+   * email/password anywhere, and the key already carries the organization. Keep
+   * it server-side only.
+   */
+  CHAT_API_SUBSCRIPTION_KEY: optionalSecret,
+  /**
    * Shared service key the admin server uses to mint a Chat API access token
    * for the signed-in agent (Option A token bridge). When absent, the token
    * bridge falls back to CHAT_API_SHARED_JWT_SECRET (Option B) if present.
