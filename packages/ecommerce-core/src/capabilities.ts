@@ -29,10 +29,7 @@ export type EcommerceModuleCapability = {
 };
 
 export const ecommerceModuleCapabilities = {
-  analytics: {
-    status: "backend-required",
-    reason: "The commerce API has no admin analytics aggregate endpoint.",
-  },
+  analytics: { status: "available" },
   products: { status: "available" },
   variants: { status: "available" },
   attributes: { status: "available" },
@@ -45,10 +42,7 @@ export const ecommerceModuleCapabilities = {
     status: "backend-required",
     reason: "Return merchandise authorization endpoints are not implemented.",
   },
-  shipments: {
-    status: "backend-required",
-    reason: "Shipment and tracking endpoints are not implemented.",
-  },
+  shipments: { status: "available" },
   customers: { status: "available" },
   vendors: { status: "available" },
   withdrawals: { status: "available" },
@@ -57,10 +51,7 @@ export const ecommerceModuleCapabilities = {
     status: "backend-required",
     reason: "Commerce marketing endpoints are not implemented.",
   },
-  shipping: {
-    status: "backend-required",
-    reason: "Shipping configuration endpoints are not implemented.",
-  },
+  shipping: { status: "available" },
   reports: {
     status: "backend-required",
     reason: "Commerce reporting aggregates are not implemented.",

@@ -74,6 +74,38 @@ import type {
   LaravelWithdrawalDto,
 } from "./dto";
 
+import type {
+  CustomerGroup,
+  ShippingCarrier,
+  ShippingZone,
+  ShippingRate,
+  ShippingMethod,
+  ShippingRateType,
+  Shipment,
+  ShipmentItem,
+  ShipmentStatus,
+  OrderFulfillment,
+  DashboardSnapshot,
+  RevenueSeries,
+  RevenuePoint,
+  AnalyticsTrend,
+  CommissionSummary,
+} from "../contracts";
+import type {
+  LaravelShippingCarrierDto,
+  LaravelShippingZoneDto,
+  LaravelShippingRateDto,
+  LaravelShippingMethodDto,
+  LaravelShipmentDto,
+  LaravelShipmentItemDto,
+  LaravelFulfillmentDto,
+  LaravelDashboardDto,
+  LaravelRevenueSeriesDto,
+  LaravelRevenuePointDto,
+  LaravelTrendDto,
+  LaravelCommissionSummaryDto,
+} from "./dto";
+
 function text(value: number | string | null): string | null {
   return value === null ? null : String(value);
 }
@@ -621,5 +653,256 @@ export function mapWithdrawal(dto: LaravelWithdrawalDto): Withdrawal {
     paidAt: dto.paid_at,
     cancelledAt: dto.cancelled_at,
     createdAt: dto.created_at,
+  };
+}
+
+export function mapCustomerGroup(dto: LaravelCustomerGroupDto): CustomerGroup {
+  return {
+    id: String(dto.id),
+    name: dto.name,
+    slug: dto.slug,
+    description: dto.description,
+    isActive: Boolean(dto.is_active),
+    customersCount: dto.customers_count ?? null,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapShippingCarrier(
+  dto: LaravelShippingCarrierDto,
+): ShippingCarrier {
+  return {
+    id: String(dto.id),
+    name: dto.name,
+    code: dto.code,
+    trackingUrlTemplate: dto.tracking_url_template,
+    phone: dto.phone,
+    website: dto.website,
+    isActive: Boolean(dto.is_active),
+    order: dto.order,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapShippingZone(dto: LaravelShippingZoneDto): ShippingZone {
+  return {
+    id: String(dto.id),
+    name: dto.name,
+    countryCodes: (dto.country_codes ?? []).map(String),
+    states: (dto.states ?? []).map(String),
+    priority: dto.priority,
+    isActive: Boolean(dto.is_active),
+    methodsCount: dto.methods_count ?? null,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapShippingRate(dto: LaravelShippingRateDto): ShippingRate {
+  return {
+    id: String(dto.id),
+    shippingMethodId: String(dto.shipping_method_id),
+    minValue: money(dto.min_value) ?? 0,
+    maxValue: money(dto.max_value),
+    price: money(dto.price) ?? 0,
+  };
+}
+
+export function mapShippingMethod(
+  dto: LaravelShippingMethodDto,
+): ShippingMethod {
+  const translations: Record<string, Translation> = {};
+  for (const [locale, value] of Object.entries(dto.translations ?? {})) {
+    translations[locale] = {
+      name: value.name,
+      description: value.description ?? null,
+    };
+  }
+  return {
+    id: String(dto.id),
+    zoneId: String(dto.shipping_zone_id),
+    carrierId: text(dto.shipping_carrier_id),
+    code: dto.code,
+    rateType: dto.rate_type as ShippingRateType,
+    baseRate: money(dto.base_rate) ?? 0,
+    freeOverAmount: money(dto.free_over_amount),
+    minDeliveryDays: dto.min_delivery_days,
+    maxDeliveryDays: dto.max_delivery_days,
+    isActive: Boolean(dto.is_active),
+    order: dto.order,
+    name: dto.name ?? "",
+    description: dto.description ?? null,
+    translations: translations as Translations,
+    carrier: dto.carrier ? mapShippingCarrier(dto.carrier) : null,
+    rates: (dto.rates ?? []).map(mapShippingRate),
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapShipmentItem(dto: LaravelShipmentItemDto): ShipmentItem {
+  return {
+    id: String(dto.id),
+    orderItemId: String(dto.order_item_id),
+    quantity: dto.quantity,
+    productId:
+      dto.product_id === undefined || dto.product_id === null
+        ? null
+        : String(dto.product_id),
+    productName: dto.product_name ?? null,
+    sku: dto.sku ?? null,
+    variantAttributes: dto.variant_attributes ?? null,
+  };
+}
+
+export function mapShipment(dto: LaravelShipmentDto): Shipment {
+  return {
+    id: String(dto.id),
+    orderId: String(dto.order_id),
+    orderNumber: dto.order_number ?? null,
+    shipmentNumber: dto.shipment_number,
+    carrierId: text(dto.shipping_carrier_id),
+    carrierName: dto.carrier_name,
+    trackingNumber: dto.tracking_number,
+    trackingUrl: dto.tracking_url,
+    status: dto.status as ShipmentStatus,
+    note: dto.note,
+    items: (dto.items ?? []).map(mapShipmentItem),
+    shippedAt: dto.shipped_at,
+    deliveredAt: dto.delivered_at,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
+  };
+}
+
+export function mapOrderFulfillment(
+  dto: LaravelFulfillmentDto,
+): OrderFulfillment {
+  return {
+    orderId: String(dto.order_id),
+    orderNumber: dto.order_number,
+    status: dto.status,
+    items: (dto.items ?? []).map((line) => ({
+      orderItemId: String(line.order_item_id),
+      productId: text(line.product_id),
+      productName: line.product_name,
+      sku: line.sku,
+      variantAttributes: line.variant_attributes ?? null,
+      quantityOrdered: line.quantity_ordered,
+      quantityShipped: line.quantity_shipped,
+      quantityRemaining: line.quantity_remaining,
+    })),
+  };
+}
+
+function mapTrend(dto: LaravelTrendDto): AnalyticsTrend {
+  return {
+    value: money(dto.value) ?? 0,
+    previousValue: money(dto.previous_value) ?? 0,
+    changePercent:
+      dto.change_percent === null ? null : money(dto.change_percent),
+    direction: dto.direction,
+    isImprovement: Boolean(dto.is_improvement),
+  };
+}
+
+function mapRevenuePoint(dto: LaravelRevenuePointDto): RevenuePoint {
+  return {
+    bucket: dto.bucket,
+    label: dto.label,
+    revenue: money(dto.revenue) ?? 0,
+    orders: dto.orders,
+  };
+}
+
+export function mapDashboardSnapshot(
+  dto: LaravelDashboardDto,
+): DashboardSnapshot {
+  const summarySource = dto.summary ?? {};
+  const emptyTrend: AnalyticsTrend = {
+    value: 0,
+    previousValue: 0,
+    changePercent: null,
+    direction: "flat",
+    isImprovement: false,
+  };
+  const trend = (key: string): AnalyticsTrend =>
+    summarySource[key] ? mapTrend(summarySource[key]) : emptyTrend;
+  return {
+    range: {
+      startDate: dto.range.start_date,
+      endDate: dto.range.end_date,
+      days: dto.range.days,
+      label: dto.range.label,
+      granularity: dto.range.granularity,
+    },
+    currency: dto.currency,
+    summary: {
+      revenue: trend("revenue"),
+      orders: trend("orders"),
+      newCustomers: trend("new_customers"),
+      refundRate: trend("refund_rate"),
+    },
+    revenueSeries: (dto.revenue_series?.points ?? []).map(mapRevenuePoint),
+    orderStatus: {
+      total: dto.order_status?.total ?? 0,
+      slices: (dto.order_status?.slices ?? []).map((slice) => ({
+        status: slice.status,
+        label: slice.label,
+        count: slice.count,
+        percentage: money(slice.percentage) ?? 0,
+      })),
+    },
+    recentOrders: (dto.recent_orders ?? []).map((order) => ({
+      id: String(order.id),
+      orderNumber: order.order_number,
+      customerId: String(order.customer_id),
+      status: order.status,
+      paymentStatus: order.payment_status,
+      total: money(order.total) ?? 0,
+    })),
+    topProducts: (dto.top_products ?? []).map((product) => ({
+      productId: String(product.product_id),
+      name: product.name,
+      imageUrl: product.image_url,
+      unitsSold: product.units_sold,
+      revenue: money(product.revenue) ?? 0,
+    })),
+    lowStock: {
+      total: dto.low_stock?.total ?? 0,
+      items: (dto.low_stock?.items ?? []).map((item) => ({
+        productId: String(item.product_id),
+        name: item.name,
+        sku: item.sku,
+        quantityAvailable: item.quantity_available,
+        status: item.status,
+      })),
+    },
+  };
+}
+
+export function mapRevenueSeries(dto: LaravelRevenueSeriesDto): RevenueSeries {
+  return {
+    granularity: dto.granularity,
+    points: (dto.points ?? []).map(mapRevenuePoint),
+  };
+}
+
+export function mapCommissionSummary(
+  dto: LaravelCommissionSummaryDto,
+): CommissionSummary {
+  const byType: Record<string, { count: number; net: number }> = {};
+  for (const [key, value] of Object.entries(dto.by_type ?? {})) {
+    byType[key] = { count: value.count, net: money(value.net) ?? 0 };
+  }
+  return {
+    from: dto.from,
+    to: dto.to,
+    grossSales: money(dto.gross_sales) ?? 0,
+    commissionCharged: money(dto.commission_charged) ?? 0,
+    netMovement: money(dto.net_movement) ?? 0,
+    byType,
   };
 }

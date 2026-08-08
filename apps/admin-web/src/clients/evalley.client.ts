@@ -48,6 +48,7 @@ export const evalleyClient: ClientConfig = {
       "vendors",
       "withdrawals",
       "ledger",
+      "shipping",
       "crm",
       "crmLeads",
       "crmCustomers",

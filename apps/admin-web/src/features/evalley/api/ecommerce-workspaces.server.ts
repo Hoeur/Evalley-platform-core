@@ -1,8 +1,31 @@
 import "server-only";
-import type { AttributeSet, Review } from "@platform/ecommerce-core";
+import type {
+  AttributeSet,
+  DashboardSnapshot,
+  Review,
+} from "@platform/ecommerce-core";
 import { getEcommerceCore } from "@/core/ecommerce/ecommerce-core.server";
 import type { ReviewView, WorkspaceConfig } from "../types";
 import type { OrdersView } from "../order-status";
+
+/**
+ * The analytics dashboard aggregate for the last 30 days (daily buckets).
+ * The commerce API requires an explicit inclusive date range.
+ */
+export async function getAnalyticsDashboard(): Promise<DashboardSnapshot> {
+  const toIso = (date: Date): string => date.toISOString().slice(0, 10);
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - 29);
+  return getEcommerceCore().analytics.dashboard({
+    startDate: toIso(start),
+    endDate: toIso(end),
+    granularity: "day",
+    recentOrders: 6,
+    topProducts: 5,
+    lowStock: 6,
+  });
+}
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",

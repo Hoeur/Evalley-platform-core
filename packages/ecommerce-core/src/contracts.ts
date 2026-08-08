@@ -368,12 +368,14 @@ export interface CatalogRepository {
   ): Promise<Category>;
   deleteCategory(id: string): Promise<void>;
   uploadCategoryImage(id: string, file: UploadAsset): Promise<Category>;
+  deleteCategoryImage(id: string): Promise<void>;
   listBrands(query?: PageQuery): Promise<Page<Brand>>;
   getBrand(id: string): Promise<Brand>;
   createBrand(input: SaveBrandInput): Promise<Brand>;
   updateBrand(id: string, input: Partial<SaveBrandInput>): Promise<Brand>;
   deleteBrand(id: string): Promise<void>;
   uploadBrandLogo(id: string, file: UploadAsset): Promise<Brand>;
+  deleteBrandLogo(id: string): Promise<void>;
   listAttributeSets(query?: PageQuery): Promise<Page<AttributeSet>>;
   getAttributeSet(id: string): Promise<AttributeSet>;
   createAttributeSet(input: SaveAttributeSetInput): Promise<AttributeSet>;
@@ -542,6 +544,7 @@ export interface CmsRepository {
     device: BannerDevice,
     file: UploadAsset,
   ): Promise<Banner>;
+  deleteBannerImage(id: string, device: BannerDevice): Promise<void>;
   listStaticPages(query?: PageQuery): Promise<Page<StaticPage>>;
   createStaticPage(input: SaveStaticPageInput): Promise<StaticPage>;
   updateStaticPage(
@@ -592,10 +595,56 @@ export type CustomerQuery = PageQuery & {
   readonly to?: string;
 };
 
+/** Admin edit of a customer's profile. Status changes go through suspend/activate. */
+export type SaveCustomerInput = {
+  readonly name?: string;
+  readonly email?: string | null;
+  readonly phone?: string | null;
+  readonly birthdate?: string | null;
+};
+
 export interface CustomerRepository {
   list(query?: CustomerQuery): Promise<Page<Customer>>;
   get(id: string): Promise<Customer>;
+  update(id: string, input: SaveCustomerInput): Promise<Customer>;
+  delete(id: string): Promise<void>;
+  suspend(id: string, reason?: string | null): Promise<Customer>;
+  activate(id: string): Promise<Customer>;
   resetPassword(id: string, password: string): Promise<Customer>;
+}
+
+/* Customer groups (admin: full CRUD + membership) */
+
+export type CustomerGroup = {
+  readonly id: string;
+  readonly name: string;
+  readonly slug: string | null;
+  readonly description: string | null;
+  readonly isActive: boolean;
+  readonly customersCount: number | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type SaveCustomerGroupInput = {
+  readonly name: string;
+  readonly slug?: string | null;
+  readonly description?: string | null;
+  readonly isActive?: boolean;
+};
+
+export interface CustomerGroupRepository {
+  list(query?: CustomerGroupQuery): Promise<Page<CustomerGroup>>;
+  get(id: string): Promise<CustomerGroup>;
+  create(input: SaveCustomerGroupInput): Promise<CustomerGroup>;
+  update(
+    id: string,
+    input: Partial<SaveCustomerGroupInput>,
+  ): Promise<CustomerGroup>;
+  delete(id: string): Promise<void>;
+  listMembers(id: string, query?: PageQuery): Promise<Page<Customer>>;
+  addMembers(id: string, customerIds: readonly string[]): Promise<void>;
+  removeMembers(id: string, customerIds: readonly string[]): Promise<void>;
 }
 
 /* Promotions & discounts (admin) */
@@ -878,6 +927,26 @@ export type LedgerQuery = PageQuery & {
   readonly type?: LedgerEntryType;
 };
 
+export type CommissionSummaryEntry = {
+  readonly count: number;
+  readonly net: number;
+};
+
+/** Window totals for one store's ledger — the header a statement is read under. */
+export type CommissionSummary = {
+  readonly from: string;
+  readonly to: string;
+  readonly grossSales: number;
+  readonly commissionCharged: number;
+  readonly netMovement: number;
+  readonly byType: Readonly<Record<string, CommissionSummaryEntry>>;
+};
+
+export type CommissionSummaryQuery = {
+  readonly from?: string;
+  readonly to?: string;
+};
+
 /** A store's money position, recomputed from the ledger on every read. */
 export type VendorBalance = {
   readonly storeId: string;
@@ -940,6 +1009,10 @@ export interface VendorRepository {
     storeId: string,
     query?: CommissionQuery,
   ): Promise<Page<CommissionEntry>>;
+  storeCommissionSummary(
+    storeId: string,
+    query?: CommissionSummaryQuery,
+  ): Promise<CommissionSummary>;
   storeBalance(storeId: string): Promise<VendorBalance>;
   adjustStoreBalance(
     storeId: string,
@@ -954,6 +1027,351 @@ export interface VendorRepository {
   ): Promise<Withdrawal>;
 }
 
+/* Shipping configuration — carriers, zones, methods, rates (admin) */
+
+export type ShippingRateType = "flat" | "weight" | "price" | "free";
+
+export type ShippingCarrier = {
+  readonly id: string;
+  readonly name: string;
+  readonly code: string;
+  readonly trackingUrlTemplate: string | null;
+  readonly phone: string | null;
+  readonly website: string | null;
+  readonly isActive: boolean;
+  readonly order: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type SaveShippingCarrierInput = {
+  readonly name: string;
+  readonly code: string;
+  readonly trackingUrlTemplate?: string | null;
+  readonly phone?: string | null;
+  readonly website?: string | null;
+  readonly isActive?: boolean;
+  readonly order?: number;
+};
+
+export type ShippingZone = {
+  readonly id: string;
+  readonly name: string;
+  readonly countryCodes: readonly string[];
+  readonly states: readonly string[];
+  readonly priority: number;
+  readonly isActive: boolean;
+  readonly methodsCount: number | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type SaveShippingZoneInput = {
+  readonly name: string;
+  readonly countryCodes: readonly string[];
+  readonly states?: readonly string[];
+  readonly priority?: number;
+  readonly isActive?: boolean;
+};
+
+/** A table-rate tier. `price` and value thresholds are in major units. */
+export type ShippingRate = {
+  readonly id: string;
+  readonly shippingMethodId: string;
+  readonly minValue: number;
+  readonly maxValue: number | null;
+  readonly price: number;
+};
+
+export type SaveShippingRateInput = {
+  readonly minValue: number;
+  readonly maxValue?: number | null;
+  readonly price: number;
+};
+
+export type ShippingMethod = {
+  readonly id: string;
+  readonly zoneId: string;
+  readonly carrierId: string | null;
+  readonly code: string;
+  readonly rateType: ShippingRateType;
+  readonly baseRate: number;
+  readonly freeOverAmount: number | null;
+  readonly minDeliveryDays: number | null;
+  readonly maxDeliveryDays: number | null;
+  readonly isActive: boolean;
+  readonly order: number;
+  readonly name: string;
+  readonly description: string | null;
+  readonly translations: Translations;
+  readonly carrier: ShippingCarrier | null;
+  readonly rates: readonly ShippingRate[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type ShippingMethodQuery = PageQuery & {
+  readonly zoneId?: string;
+  readonly carrierId?: string;
+  readonly rateType?: ShippingRateType;
+  readonly isActive?: boolean;
+};
+
+export type SaveShippingMethodInput = {
+  readonly zoneId: string;
+  readonly carrierId?: string | null;
+  readonly code: string;
+  readonly rateType: ShippingRateType;
+  readonly baseRate?: number | null;
+  readonly freeOverAmount?: number | null;
+  readonly minDeliveryDays?: number | null;
+  readonly maxDeliveryDays?: number | null;
+  readonly isActive?: boolean;
+  readonly order?: number;
+  readonly translations: Translations;
+  readonly rates?: readonly SaveShippingRateInput[];
+};
+
+export interface ShippingRepository {
+  listCarriers(query?: PageQuery): Promise<Page<ShippingCarrier>>;
+  getCarrier(id: string): Promise<ShippingCarrier>;
+  createCarrier(input: SaveShippingCarrierInput): Promise<ShippingCarrier>;
+  updateCarrier(
+    id: string,
+    input: Partial<SaveShippingCarrierInput>,
+  ): Promise<ShippingCarrier>;
+  deleteCarrier(id: string): Promise<void>;
+  listZones(query?: PageQuery): Promise<Page<ShippingZone>>;
+  getZone(id: string): Promise<ShippingZone>;
+  createZone(input: SaveShippingZoneInput): Promise<ShippingZone>;
+  updateZone(
+    id: string,
+    input: Partial<SaveShippingZoneInput>,
+  ): Promise<ShippingZone>;
+  deleteZone(id: string): Promise<void>;
+  listMethods(query?: ShippingMethodQuery): Promise<Page<ShippingMethod>>;
+  getMethod(id: string): Promise<ShippingMethod>;
+  createMethod(input: SaveShippingMethodInput): Promise<ShippingMethod>;
+  updateMethod(
+    id: string,
+    input: Partial<SaveShippingMethodInput>,
+  ): Promise<ShippingMethod>;
+  deleteMethod(id: string): Promise<void>;
+  listRates(methodId: string): Promise<readonly ShippingRate[]>;
+  createRate(
+    methodId: string,
+    input: SaveShippingRateInput,
+  ): Promise<ShippingRate>;
+  updateRate(
+    methodId: string,
+    rateId: string,
+    input: Partial<SaveShippingRateInput>,
+  ): Promise<ShippingRate>;
+  deleteRate(methodId: string, rateId: string): Promise<void>;
+}
+
+/* Shipments & order fulfillment (admin) */
+
+export type ShipmentStatus =
+  | "pending"
+  | "in_transit"
+  | "out_for_delivery"
+  | "delivered"
+  | "failed"
+  | "returned"
+  | "cancelled";
+
+export type ShipmentItem = {
+  readonly id: string;
+  readonly orderItemId: string;
+  readonly quantity: number;
+  readonly productId: string | null;
+  readonly productName: string | null;
+  readonly sku: string | null;
+  readonly variantAttributes: Readonly<Record<string, unknown>> | null;
+};
+
+export type Shipment = {
+  readonly id: string;
+  readonly orderId: string;
+  readonly orderNumber: string | null;
+  readonly shipmentNumber: string;
+  readonly carrierId: string | null;
+  readonly carrierName: string | null;
+  readonly trackingNumber: string | null;
+  readonly trackingUrl: string | null;
+  readonly status: ShipmentStatus;
+  readonly note: string | null;
+  readonly items: readonly ShipmentItem[];
+  readonly shippedAt: string | null;
+  readonly deliveredAt: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
+
+export type ShipmentQuery = PageQuery & {
+  readonly status?: ShipmentStatus;
+  readonly orderId?: string;
+  readonly carrierId?: string;
+  readonly search?: string;
+};
+
+export type FulfillmentLine = {
+  readonly orderItemId: string;
+  readonly productId: string | null;
+  readonly productName: string | null;
+  readonly sku: string | null;
+  readonly variantAttributes: Readonly<Record<string, unknown>> | null;
+  readonly quantityOrdered: number;
+  readonly quantityShipped: number;
+  readonly quantityRemaining: number;
+};
+
+export type OrderFulfillment = {
+  readonly orderId: string;
+  readonly orderNumber: string;
+  readonly status: string;
+  readonly items: readonly FulfillmentLine[];
+};
+
+export type CreateShipmentLine = {
+  readonly orderItemId: string;
+  readonly quantity: number;
+};
+
+export type CreateShipmentInput = {
+  readonly carrierId?: string | null;
+  readonly trackingNumber?: string | null;
+  readonly status?: Extract<
+    ShipmentStatus,
+    "pending" | "in_transit" | "out_for_delivery" | "delivered"
+  >;
+  readonly note?: string | null;
+  readonly items: readonly CreateShipmentLine[];
+};
+
+export type UpdateShipmentInput = {
+  readonly carrierId?: string | null;
+  readonly trackingNumber?: string | null;
+  readonly note?: string | null;
+};
+
+export interface ShipmentRepository {
+  list(query?: ShipmentQuery): Promise<Page<Shipment>>;
+  get(id: string): Promise<Shipment>;
+  update(id: string, input: UpdateShipmentInput): Promise<Shipment>;
+  updateStatus(id: string, status: ShipmentStatus): Promise<Shipment>;
+  listForOrder(orderId: string): Promise<readonly Shipment[]>;
+  fulfillment(orderId: string): Promise<OrderFulfillment>;
+  createForOrder(orderId: string, input: CreateShipmentInput): Promise<Shipment>;
+}
+
+/* Analytics — admin dashboard aggregates */
+
+export type AnalyticsGranularity = "day" | "week" | "month";
+
+export type AnalyticsTrend = {
+  readonly value: number;
+  readonly previousValue: number;
+  readonly changePercent: number | null;
+  readonly direction: string;
+  readonly isImprovement: boolean;
+};
+
+export type AnalyticsSummary = {
+  readonly revenue: AnalyticsTrend;
+  readonly orders: AnalyticsTrend;
+  readonly newCustomers: AnalyticsTrend;
+  readonly refundRate: AnalyticsTrend;
+};
+
+export type RevenuePoint = {
+  readonly bucket: string;
+  readonly label: string;
+  readonly revenue: number;
+  readonly orders: number;
+};
+
+export type OrderStatusSlice = {
+  readonly status: string;
+  readonly label: string;
+  readonly count: number;
+  readonly percentage: number;
+};
+
+export type DashboardRecentOrder = {
+  readonly id: string;
+  readonly orderNumber: string;
+  readonly customerId: string;
+  readonly status: string;
+  readonly paymentStatus: string;
+  readonly total: number;
+};
+
+export type DashboardTopProduct = {
+  readonly productId: string;
+  readonly name: string | null;
+  readonly imageUrl: string | null;
+  readonly unitsSold: number;
+  readonly revenue: number;
+};
+
+export type DashboardLowStockItem = {
+  readonly productId: string;
+  readonly name: string | null;
+  readonly sku: string | null;
+  readonly quantityAvailable: number;
+  readonly status: string;
+};
+
+export type DashboardSnapshot = {
+  readonly range: {
+    readonly startDate: string;
+    readonly endDate: string;
+    readonly days: number;
+    readonly label: string;
+    readonly granularity: string;
+  };
+  readonly currency: string;
+  readonly summary: AnalyticsSummary;
+  readonly revenueSeries: readonly RevenuePoint[];
+  readonly orderStatus: {
+    readonly total: number;
+    readonly slices: readonly OrderStatusSlice[];
+  };
+  readonly recentOrders: readonly DashboardRecentOrder[];
+  readonly topProducts: readonly DashboardTopProduct[];
+  readonly lowStock: {
+    readonly total: number;
+    readonly items: readonly DashboardLowStockItem[];
+  };
+};
+
+export type RevenueSeries = {
+  readonly granularity: string;
+  readonly points: readonly RevenuePoint[];
+};
+
+export type DashboardQuery = {
+  readonly startDate: string;
+  readonly endDate: string;
+  readonly granularity?: AnalyticsGranularity;
+  readonly recentOrders?: number;
+  readonly topProducts?: number;
+  readonly lowStock?: number;
+};
+
+export type RevenueSeriesQuery = {
+  readonly startDate: string;
+  readonly endDate: string;
+  readonly granularity?: AnalyticsGranularity;
+};
+
+export interface AnalyticsRepository {
+  dashboard(query: DashboardQuery): Promise<DashboardSnapshot>;
+  revenueSeries(query: RevenueSeriesQuery): Promise<RevenueSeries>;
+}
+
 export type EcommerceCore = {
   readonly catalog: CatalogRepository;
   readonly inventory: InventoryRepository;
@@ -961,7 +1379,11 @@ export type EcommerceCore = {
   readonly reviews: ReviewRepository;
   readonly cms: CmsRepository;
   readonly customers: CustomerRepository;
+  readonly customerGroups: CustomerGroupRepository;
   readonly promotions: PromotionRepository;
   readonly notifications: NotificationRepository;
   readonly vendors: VendorRepository;
+  readonly shipping: ShippingRepository;
+  readonly shipments: ShipmentRepository;
+  readonly analytics: AnalyticsRepository;
 };

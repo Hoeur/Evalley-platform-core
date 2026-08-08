@@ -95,6 +95,99 @@ import {
   mapVendorBalance,
   mapWithdrawal,
 } from "./mappers";
+import type {
+  SaveCustomerGroupInput,
+  SaveShippingCarrierInput,
+  SaveShippingZoneInput,
+  SaveShippingMethodInput,
+  SaveShippingRateInput,
+} from "../contracts";
+import type {
+  LaravelShippingCarrierDto,
+  LaravelShippingZoneDto,
+  LaravelShippingMethodDto,
+  LaravelShippingRateDto,
+  LaravelShipmentDto,
+  LaravelFulfillmentDto,
+  LaravelDashboardDto,
+  LaravelRevenueSeriesDto,
+  LaravelCommissionSummaryDto,
+} from "./dto";
+import {
+  mapCustomerGroup,
+  mapShippingCarrier,
+  mapShippingZone,
+  mapShippingMethod,
+  mapShippingRate,
+  mapShipment,
+  mapOrderFulfillment,
+  mapDashboardSnapshot,
+  mapRevenueSeries,
+  mapCommissionSummary,
+} from "./mappers";
+
+function shippingCarrierBody(input: Partial<SaveShippingCarrierInput>) {
+  return {
+    name: input.name,
+    code: input.code,
+    tracking_url_template: input.trackingUrlTemplate,
+    phone: input.phone,
+    website: input.website,
+    is_active: input.isActive,
+    order: input.order,
+  };
+}
+
+function shippingZoneBody(input: Partial<SaveShippingZoneInput>) {
+  return {
+    name: input.name,
+    country_codes: input.countryCodes,
+    states: input.states,
+    priority: input.priority,
+    is_active: input.isActive,
+  };
+}
+
+function shippingRateBody(input: Partial<SaveShippingRateInput>) {
+  return {
+    min_value: input.minValue,
+    max_value: input.maxValue,
+    price: input.price === undefined ? undefined : String(input.price),
+  };
+}
+
+function shippingMethodBody(input: Partial<SaveShippingMethodInput>) {
+  return {
+    shipping_zone_id: input.zoneId,
+    shipping_carrier_id: input.carrierId,
+    code: input.code,
+    rate_type: input.rateType,
+    base_rate: input.baseRate === undefined ? undefined : String(input.baseRate),
+    free_over_amount:
+      input.freeOverAmount === undefined || input.freeOverAmount === null
+        ? input.freeOverAmount
+        : String(input.freeOverAmount),
+    min_delivery_days: input.minDeliveryDays,
+    max_delivery_days: input.maxDeliveryDays,
+    is_active: input.isActive,
+    order: input.order,
+    translations: input.translations,
+    rates: input.rates?.map((rate) => ({
+      min_value: rate.minValue,
+      max_value: rate.maxValue,
+      price: String(rate.price),
+    })),
+  };
+}
+
+function customerGroupBody(input: Partial<SaveCustomerGroupInput>) {
+  return {
+    name: input.name,
+    slug: input.slug,
+    description: input.description,
+    is_active: input.isActive,
+  };
+}
 
 type LaravelAdapterOptions = {
   readonly transport: EcommerceTransport;
@@ -647,6 +740,12 @@ export function createLaravelEcommerceCore({
         });
         return mapCategory(unwrapItem(envelope), locale);
       },
+      async deleteCategoryImage(id) {
+        await transport({
+          method: "DELETE",
+          path: `/catalog/categories/${id}/image`,
+        });
+      },
       async listBrands(query) {
         const envelope = await transport<LaravelEnvelope<LaravelBrandDto>>({
           method: "GET",
@@ -692,6 +791,12 @@ export function createLaravelEcommerceCore({
           body: uploadBody("logo", file),
         });
         return mapBrand(unwrapItem(envelope), locale);
+      },
+      async deleteBrandLogo(id) {
+        await transport({
+          method: "DELETE",
+          path: `/catalog/brands/${id}/logo`,
+        });
       },
       async listAttributeSets(query) {
         const envelope = await transport<
@@ -988,6 +1093,12 @@ export function createLaravelEcommerceCore({
         });
         return mapBanner(unwrapItem(envelope), locale);
       },
+      async deleteBannerImage(id, device) {
+        await transport({
+          method: "DELETE",
+          path: `/cms/banners/${id}/image/${device}`,
+        });
+      },
       async listStaticPages(query) {
         const envelope = await transport<LaravelEnvelope<LaravelStaticPageDto>>({
           method: "GET",
@@ -1118,6 +1229,37 @@ export function createLaravelEcommerceCore({
         const envelope = await transport<LaravelEnvelope<LaravelCustomerDto>>({
           method: "GET",
           path: `/customers/${id}`,
+        });
+        return mapCustomer(unwrapItem(envelope));
+      },
+      async update(id, input) {
+        const envelope = await transport<LaravelEnvelope<LaravelCustomerDto>>({
+          method: "PATCH",
+          path: `/customers/${id}`,
+          body: {
+            name: input.name,
+            email: input.email,
+            phone: input.phone,
+            birthdate: input.birthdate,
+          },
+        });
+        return mapCustomer(unwrapItem(envelope));
+      },
+      async delete(id) {
+        await transport({ method: "DELETE", path: `/customers/${id}` });
+      },
+      async suspend(id, reason) {
+        const envelope = await transport<LaravelEnvelope<LaravelCustomerDto>>({
+          method: "POST",
+          path: `/customers/${id}/suspend`,
+          body: { reason: reason ?? undefined },
+        });
+        return mapCustomer(unwrapItem(envelope));
+      },
+      async activate(id) {
+        const envelope = await transport<LaravelEnvelope<LaravelCustomerDto>>({
+          method: "POST",
+          path: `/customers/${id}/activate`,
         });
         return mapCustomer(unwrapItem(envelope));
       },
@@ -1322,6 +1464,16 @@ export function createLaravelEcommerceCore({
         const page = unwrapItems(envelope);
         return { ...page, items: page.items.map(mapCommissionEntry) };
       },
+      async storeCommissionSummary(storeId, query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelCommissionSummaryDto>
+        >({
+          method: "GET",
+          path: `/vendors/${storeId}/commissions/summary`,
+          query: { from: query?.from, to: query?.to },
+        });
+        return mapCommissionSummary(unwrapItem(envelope));
+      },
       async storeBalance(storeId) {
         const envelope = await transport<
           LaravelEnvelope<LaravelVendorBalanceDto>
@@ -1383,6 +1535,335 @@ export function createLaravelEcommerceCore({
           body: { status: input.status, reason: input.reason ?? undefined },
         });
         return mapWithdrawal(unwrapItem(envelope));
+      },
+    },
+    customerGroups: {
+      async list(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelCustomerGroupDto>
+        >({
+          method: "GET",
+          path: "/customer-groups",
+          query: {
+            ...pageQuery(query),
+            q: query?.search,
+            active_only: query?.activeOnly,
+          },
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapCustomerGroup) };
+      },
+      async get(id) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelCustomerGroupDto>
+        >({ method: "GET", path: `/customer-groups/${id}` });
+        return mapCustomerGroup(unwrapItem(envelope));
+      },
+      async create(input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelCustomerGroupDto>
+        >({
+          method: "POST",
+          path: "/customer-groups",
+          body: customerGroupBody(input),
+        });
+        return mapCustomerGroup(unwrapItem(envelope));
+      },
+      async update(id, input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelCustomerGroupDto>
+        >({
+          method: "PUT",
+          path: `/customer-groups/${id}`,
+          body: customerGroupBody(input),
+        });
+        return mapCustomerGroup(unwrapItem(envelope));
+      },
+      async delete(id) {
+        await transport({ method: "DELETE", path: `/customer-groups/${id}` });
+      },
+      async listMembers(id, query) {
+        const envelope = await transport<LaravelEnvelope<LaravelCustomerDto>>({
+          method: "GET",
+          path: `/customer-groups/${id}/members`,
+          query: pageQuery(query),
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapCustomer) };
+      },
+      async addMembers(id, customerIds) {
+        await transport({
+          method: "POST",
+          path: `/customer-groups/${id}/members`,
+          body: { customer_ids: customerIds },
+        });
+      },
+      async removeMembers(id, customerIds) {
+        await transport({
+          method: "DELETE",
+          path: `/customer-groups/${id}/members`,
+          body: { customer_ids: customerIds },
+        });
+      },
+    },
+    shipping: {
+      async listCarriers(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingCarrierDto>
+        >({ method: "GET", path: "/shipping/carriers", query: pageQuery(query) });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapShippingCarrier) };
+      },
+      async getCarrier(id) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingCarrierDto>
+        >({ method: "GET", path: `/shipping/carriers/${id}` });
+        return mapShippingCarrier(unwrapItem(envelope));
+      },
+      async createCarrier(input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingCarrierDto>
+        >({
+          method: "POST",
+          path: "/shipping/carriers",
+          body: shippingCarrierBody(input),
+        });
+        return mapShippingCarrier(unwrapItem(envelope));
+      },
+      async updateCarrier(id, input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingCarrierDto>
+        >({
+          method: "PUT",
+          path: `/shipping/carriers/${id}`,
+          body: shippingCarrierBody(input),
+        });
+        return mapShippingCarrier(unwrapItem(envelope));
+      },
+      async deleteCarrier(id) {
+        await transport({
+          method: "DELETE",
+          path: `/shipping/carriers/${id}`,
+        });
+      },
+      async listZones(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingZoneDto>
+        >({ method: "GET", path: "/shipping/zones", query: pageQuery(query) });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapShippingZone) };
+      },
+      async getZone(id) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingZoneDto>
+        >({ method: "GET", path: `/shipping/zones/${id}` });
+        return mapShippingZone(unwrapItem(envelope));
+      },
+      async createZone(input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingZoneDto>
+        >({
+          method: "POST",
+          path: "/shipping/zones",
+          body: shippingZoneBody(input),
+        });
+        return mapShippingZone(unwrapItem(envelope));
+      },
+      async updateZone(id, input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingZoneDto>
+        >({
+          method: "PUT",
+          path: `/shipping/zones/${id}`,
+          body: shippingZoneBody(input),
+        });
+        return mapShippingZone(unwrapItem(envelope));
+      },
+      async deleteZone(id) {
+        await transport({ method: "DELETE", path: `/shipping/zones/${id}` });
+      },
+      async listMethods(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingMethodDto>
+        >({
+          method: "GET",
+          path: "/shipping/methods",
+          query: {
+            ...pageQuery(query),
+            shipping_zone_id: query?.zoneId,
+            shipping_carrier_id: query?.carrierId,
+            rate_type: query?.rateType,
+            is_active: query?.isActive,
+          },
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapShippingMethod) };
+      },
+      async getMethod(id) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingMethodDto>
+        >({ method: "GET", path: `/shipping/methods/${id}` });
+        return mapShippingMethod(unwrapItem(envelope));
+      },
+      async createMethod(input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingMethodDto>
+        >({
+          method: "POST",
+          path: "/shipping/methods",
+          body: shippingMethodBody(input),
+        });
+        return mapShippingMethod(unwrapItem(envelope));
+      },
+      async updateMethod(id, input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingMethodDto>
+        >({
+          method: "PUT",
+          path: `/shipping/methods/${id}`,
+          body: shippingMethodBody(input),
+        });
+        return mapShippingMethod(unwrapItem(envelope));
+      },
+      async deleteMethod(id) {
+        await transport({ method: "DELETE", path: `/shipping/methods/${id}` });
+      },
+      async listRates(methodId) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingRateDto>
+        >({ method: "GET", path: `/shipping/methods/${methodId}/rates` });
+        return unwrapItems(envelope).items.map(mapShippingRate);
+      },
+      async createRate(methodId, input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingRateDto>
+        >({
+          method: "POST",
+          path: `/shipping/methods/${methodId}/rates`,
+          body: shippingRateBody(input),
+        });
+        return mapShippingRate(unwrapItem(envelope));
+      },
+      async updateRate(methodId, rateId, input) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelShippingRateDto>
+        >({
+          method: "PUT",
+          path: `/shipping/methods/${methodId}/rates/${rateId}`,
+          body: shippingRateBody(input),
+        });
+        return mapShippingRate(unwrapItem(envelope));
+      },
+      async deleteRate(methodId, rateId) {
+        await transport({
+          method: "DELETE",
+          path: `/shipping/methods/${methodId}/rates/${rateId}`,
+        });
+      },
+    },
+    shipments: {
+      async list(query) {
+        const envelope = await transport<LaravelEnvelope<LaravelShipmentDto>>({
+          method: "GET",
+          path: "/shipments",
+          query: {
+            ...pageQuery(query),
+            status: query?.status,
+            order_id: query?.orderId,
+            shipping_carrier_id: query?.carrierId,
+            q: query?.search,
+          },
+        });
+        const page = unwrapItems(envelope);
+        return { ...page, items: page.items.map(mapShipment) };
+      },
+      async get(id) {
+        const envelope = await transport<LaravelEnvelope<LaravelShipmentDto>>({
+          method: "GET",
+          path: `/shipments/${id}`,
+        });
+        return mapShipment(unwrapItem(envelope));
+      },
+      async update(id, input) {
+        const envelope = await transport<LaravelEnvelope<LaravelShipmentDto>>({
+          method: "PATCH",
+          path: `/shipments/${id}`,
+          body: {
+            shipping_carrier_id: input.carrierId,
+            tracking_number: input.trackingNumber,
+            note: input.note,
+          },
+        });
+        return mapShipment(unwrapItem(envelope));
+      },
+      async updateStatus(id, status) {
+        const envelope = await transport<LaravelEnvelope<LaravelShipmentDto>>({
+          method: "PATCH",
+          path: `/shipments/${id}/status`,
+          body: { status },
+        });
+        return mapShipment(unwrapItem(envelope));
+      },
+      async listForOrder(orderId) {
+        const envelope = await transport<LaravelEnvelope<LaravelShipmentDto>>({
+          method: "GET",
+          path: `/orders/${orderId}/shipments`,
+        });
+        return unwrapItems(envelope).items.map(mapShipment);
+      },
+      async fulfillment(orderId) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelFulfillmentDto>
+        >({ method: "GET", path: `/orders/${orderId}/fulfillment` });
+        return mapOrderFulfillment(unwrapItem(envelope));
+      },
+      async createForOrder(orderId, input) {
+        const envelope = await transport<LaravelEnvelope<LaravelShipmentDto>>({
+          method: "POST",
+          path: `/orders/${orderId}/shipments`,
+          body: {
+            shipping_carrier_id: input.carrierId ?? undefined,
+            tracking_number: input.trackingNumber ?? undefined,
+            status: input.status,
+            note: input.note ?? undefined,
+            items: input.items.map((item) => ({
+              order_item_id: item.orderItemId,
+              quantity: item.quantity,
+            })),
+          },
+        });
+        return mapShipment(unwrapItem(envelope));
+      },
+    },
+    analytics: {
+      async dashboard(query) {
+        const envelope = await transport<LaravelEnvelope<LaravelDashboardDto>>({
+          method: "GET",
+          path: "/analytics/dashboard",
+          query: {
+            start_date: query.startDate,
+            end_date: query.endDate,
+            granularity: query.granularity,
+            recent_orders: query.recentOrders,
+            top_products: query.topProducts,
+            low_stock: query.lowStock,
+          },
+        });
+        return mapDashboardSnapshot(unwrapItem(envelope));
+      },
+      async revenueSeries(query) {
+        const envelope = await transport<
+          LaravelEnvelope<LaravelRevenueSeriesDto>
+        >({
+          method: "GET",
+          path: "/analytics/revenue-series",
+          query: {
+            start_date: query.startDate,
+            end_date: query.endDate,
+            granularity: query.granularity,
+          },
+        });
+        return mapRevenueSeries(unwrapItem(envelope));
       },
     },
   };

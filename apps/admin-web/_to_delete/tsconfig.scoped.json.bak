@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true, "incremental": false, "composite": false },
+  "include": [
+    "next-env.d.ts",
+    "src/features/vendors/**/*.ts",
+    "src/features/vendors/**/*.tsx",
+    "src/features/withdrawals/**/*.ts",
+    "src/features/withdrawals/**/*.tsx",
+    "src/app/(dashboard)/vendors/page.tsx",
+    "src/app/(dashboard)/vendors/[storeId]/page.tsx",
+    "src/app/(dashboard)/withdrawals/page.tsx"
+  ]
+}

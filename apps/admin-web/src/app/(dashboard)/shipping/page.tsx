@@ -1,6 +1,15 @@
-import { Truck } from "lucide-react";
-import { ProtectedModulePage } from "@/features/shared/protected-module-page";
+import { hasPermission } from "@/core/auth/permissions";
+import { requireModuleAccess } from "@/core/auth/authorize.server";
+import { ShippingWorkspace } from "@/features/shipping/components/shipping-workspace";
+import { getShippingData } from "@/features/shipping/api/shipping.server";
 
-export default function ShippingPage() {
-  return <ProtectedModulePage module="shipping" permission="shipping.read" title="Shipping" description="Configure delivery zones, carriers, rates, and fulfillment operations." icon={Truck} />;
+export default async function ShippingPage() {
+  const { user } = await requireModuleAccess("shipping", "shipping.read");
+  const data = await getShippingData();
+  return (
+    <ShippingWorkspace
+      data={data}
+      canManage={hasPermission(user.permissions, "shipping.manage")}
+    />
+  );
 }

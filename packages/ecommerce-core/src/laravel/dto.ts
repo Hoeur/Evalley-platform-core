@@ -407,3 +407,209 @@ export type LaravelWithdrawalDto = {
   readonly cancelled_at: string | null;
   readonly created_at: string;
 };
+
+/* Customer groups (admin CRUD) — shares LaravelCustomerGroupDto above */
+
+/* Shipping — carriers, zones, methods, rates (admin) */
+
+export type LaravelShippingCarrierDto = {
+  readonly id: number | string;
+  readonly name: string;
+  readonly code: string;
+  readonly tracking_url_template: string | null;
+  readonly phone: string | null;
+  readonly website: string | null;
+  readonly is_active: boolean;
+  readonly order: number;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+export type LaravelShippingZoneDto = {
+  readonly id: number | string;
+  readonly name: string;
+  readonly country_codes: readonly string[];
+  readonly states: readonly string[];
+  readonly priority: number;
+  readonly is_active: boolean;
+  readonly methods_count?: number;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+// min_value/max_value are weight/price thresholds; price is a major-unit
+// decimal string from Money::getAmount().
+export type LaravelShippingRateDto = {
+  readonly id: number | string;
+  readonly shipping_method_id: number | string;
+  readonly min_value: number | string;
+  readonly max_value: number | string | null;
+  readonly price: number | string;
+};
+
+export type LaravelShippingMethodDto = {
+  readonly id: number | string;
+  readonly shipping_zone_id: number | string;
+  readonly shipping_carrier_id: number | string | null;
+  readonly code: string;
+  readonly rate_type: string;
+  readonly base_rate: number | string;
+  readonly free_over_amount: number | string | null;
+  readonly min_delivery_days: number | null;
+  readonly max_delivery_days: number | null;
+  readonly is_active: boolean;
+  readonly order: number;
+  readonly name: string | null;
+  readonly description: string | null;
+  readonly translations?: Readonly<
+    Record<string, { name: string; description?: string | null }>
+  >;
+  readonly carrier?: LaravelShippingCarrierDto | null;
+  readonly rates?: readonly LaravelShippingRateDto[];
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+/* Shipments & fulfillment (admin) */
+
+export type LaravelShipmentItemDto = {
+  readonly id: number | string;
+  readonly order_item_id: number | string;
+  readonly quantity: number;
+  readonly product_id?: number | string | null;
+  readonly product_name?: string | null;
+  readonly sku?: string | null;
+  readonly variant_attributes?: Readonly<Record<string, unknown>> | null;
+};
+
+export type LaravelShipmentDto = {
+  readonly id: number | string;
+  readonly order_id: number | string;
+  readonly order_number?: string | null;
+  readonly shipment_number: string;
+  readonly shipping_carrier_id: number | string | null;
+  readonly carrier_name: string | null;
+  readonly tracking_number: string | null;
+  readonly tracking_url: string | null;
+  readonly status: string;
+  readonly note: string | null;
+  readonly items?: readonly LaravelShipmentItemDto[];
+  readonly shipped_at: string | null;
+  readonly delivered_at: string | null;
+  readonly created_at: string;
+  readonly updated_at: string;
+};
+
+export type LaravelFulfillmentLineDto = {
+  readonly order_item_id: number | string;
+  readonly product_id: number | string | null;
+  readonly product_name: string | null;
+  readonly sku: string | null;
+  readonly variant_attributes: Readonly<Record<string, unknown>> | null;
+  readonly quantity_ordered: number;
+  readonly quantity_shipped: number;
+  readonly quantity_remaining: number;
+};
+
+export type LaravelFulfillmentDto = {
+  readonly order_id: number | string;
+  readonly order_number: string;
+  readonly status: string;
+  readonly items: readonly LaravelFulfillmentLineDto[];
+};
+
+/* Analytics dashboard (admin) */
+
+export type LaravelTrendDto = {
+  readonly value: number | string;
+  readonly previous_value: number | string;
+  readonly change_percent: number | string | null;
+  readonly direction: string;
+  readonly is_improvement: boolean;
+};
+
+export type LaravelRevenuePointDto = {
+  readonly bucket: string;
+  readonly label: string;
+  readonly revenue: number | string;
+  readonly orders: number;
+};
+
+export type LaravelOrderStatusSliceDto = {
+  readonly status: string;
+  readonly label: string;
+  readonly count: number;
+  readonly percentage: number | string;
+};
+
+export type LaravelDashboardRecentOrderDto = {
+  readonly id: number | string;
+  readonly order_number: string;
+  readonly customer_id: number | string;
+  readonly status: string;
+  readonly payment_status: string;
+  readonly total: number | string;
+};
+
+export type LaravelDashboardTopProductDto = {
+  readonly product_id: number | string;
+  readonly name: string | null;
+  readonly image_url: string | null;
+  readonly units_sold: number;
+  readonly revenue: number | string;
+};
+
+export type LaravelDashboardLowStockDto = {
+  readonly product_id: number | string;
+  readonly name: string | null;
+  readonly sku: string | null;
+  readonly quantity_available: number;
+  readonly status: string;
+};
+
+export type LaravelDashboardDto = {
+  readonly range: {
+    readonly start_date: string;
+    readonly end_date: string;
+    readonly days: number;
+    readonly label: string;
+    readonly granularity: string;
+    readonly granularity_explicit?: boolean;
+    readonly compared_to?: {
+      readonly start_date: string;
+      readonly end_date: string;
+    };
+  };
+  readonly currency: string;
+  readonly summary: Readonly<Record<string, LaravelTrendDto>>;
+  readonly revenue_series: {
+    readonly granularity: string;
+    readonly points: readonly LaravelRevenuePointDto[];
+  };
+  readonly order_status: {
+    readonly total: number;
+    readonly slices: readonly LaravelOrderStatusSliceDto[];
+  };
+  readonly recent_orders: readonly LaravelDashboardRecentOrderDto[];
+  readonly top_products: readonly LaravelDashboardTopProductDto[];
+  readonly low_stock: {
+    readonly total: number;
+    readonly items: readonly LaravelDashboardLowStockDto[];
+  };
+};
+
+export type LaravelRevenueSeriesDto = {
+  readonly granularity: string;
+  readonly points: readonly LaravelRevenuePointDto[];
+};
+
+export type LaravelCommissionSummaryDto = {
+  readonly from: string;
+  readonly to: string;
+  readonly gross_sales: number | string;
+  readonly commission_charged: number | string;
+  readonly net_movement: number | string;
+  readonly by_type: Readonly<
+    Record<string, { count: number; net: number | string }>
+  >;
+};
